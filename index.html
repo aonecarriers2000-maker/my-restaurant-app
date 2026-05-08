@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2-Inch Receipt Maker</title>
+    <style>
+        body { font-family: sans-serif; display: flex; padding: 20px; gap: 20px; background: #f4f4f4; }
+        .controls { width: 320px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .input-box { margin-bottom: 12px; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; margin-bottom: 10px; }
+        .add-btn { background: #007bff; color: white; }
+        .print-btn { background: #28a745; color: white; }
+        
+        /* Receipt Styling */
+        #receipt { 
+            width: 2in; 
+            background: white; 
+            padding: 10px; 
+            font-family: 'Courier New', monospace; 
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .center { text-align: center; }
+        .dashed { border-top: 1px dashed black; margin: 5px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; border-bottom: 1px dashed black; }
+        .total-row { font-weight: bold; display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px; }
+
+        @media print {
+            .controls { display: none; }
+            body { background: white; padding: 0; justify-content: flex-start; }
+            #receipt { box-shadow: none; width: 2in; margin: 0; border: none; }
+            @page { size: 2in auto; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <h3 style="margin-top: 0;">Receipt Settings</h3>
+        
+        <div class="input-box">
+            <label>Select Date</label>
+            <input type="date" id="manualDate" onchange="updateReceiptDate()">
+        </div>
+
+        <div class="dashed"></div>
+
+        <div class="input-box">
+            <label>Food Item</label>
+            <input type="text" id="foodName" placeholder="e.g. Cold Coffee">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <div class="input-box" style="flex: 2;">
+                <label>Price</label>
+                <input type="number" id="foodPrice" placeholder="0.00">
+            </div>
+            <div class="input-box" style="flex: 1;">
+                <label>Qty</label>
+                <input type="number" id="foodQty" value="1">
+            </div>
+        </div>
+        
+        <button class="add-btn" onclick="addItemToList()">Add Item</button>
+        <button class="print-btn" onclick="window.print()">Print Receipt (PDF)</button>
+        <button style="background: #f8f9fa; color: #333; border: 1px solid #ccc;" onclick="location.reload()">Clear All</button>
+    </div>
+
+    <div id="receipt">
+        <div class="center">
+            <strong style="font-size: 16px;">THE FOOD HUB</strong><br>
+            Mumbai, India
+        </div>
+        <div class="dashed"></div>
+        <div id="displayDate">Date: --/--/----</div>
+        <div>Order: #<span id="orderNum"></span></div>
+        <div class="dashed"></div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th style="text-align:right">Amt</th>
+                </tr>
+            </thead>
+            <tbody id="billTableBody">
+                </tbody>
+        </table>
+
+        <div class="dashed"></div>
+        <div class="total-row">
+            <span>TOTAL:</span>
+            <span>₹<span id="totalPrice">0.00</span></span>
+        </div>
+        <div class="dashed" style="margin-top:10px"></div>
+        <div class="center" style="font-size: 10px;">Visit Again!</div>
+    </div>
+
+    <script>
+        // Setup initial values
+        let grandTotal = 0;
+        document.getElementById('orderNum').innerText = Math.floor(Math.random() * 10000);
+        
+        // Aaj ki date default set karna
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('manualDate').value = today;
+        updateReceiptDate();
+
+        function updateReceiptDate() {
+            const dateVal = document.getElementById('manualDate').value;
+            // Format badalne ke liye (YYYY-MM-DD to DD/MM/YYYY)
+            if(dateVal) {
+                const [y, m, d] = dateVal.split('-');
+                document.getElementById('displayDate').innerText = `Date: ${d}/${m}/${y}`;
+            }
+        }
+
+        function addItemToList() {
+            const name = document.getElementById('foodName').value;
+            const price = parseFloat(document.getElementById('foodPrice').value);
+            const qty = parseInt(document.getElementById('foodQty').value);
+
+            if (name.trim() === "" || isNaN(price)) {
+                alert("Please enter Item Name and Price");
+                return;
+            }
+
+            const amount = price * qty;
+            grandTotal += amount;
+
+            // Receipt table mein add karna
+            const tableBody = document.getElementById('billTableBody');
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td style="padding: 2px 0;">${name}</td>
+                <td>${qty}</td>
+                <td style="text-align:right">${amount.toFixed(2)}</td>
+            `;
+
+            // Total update karna
+            document.getElementById('totalPrice').innerText = grandTotal.toFixed(2);
+
+            // Inputs clear karna
+            document.getElementById('foodName').value = "";
+            document.getElementById('foodPrice').value = "";
+            document.getElementById('foodQty').value = "1";
+            document.getElementById('foodName').focus();
+        }
+    </script>
+
+</body>
+</html>
