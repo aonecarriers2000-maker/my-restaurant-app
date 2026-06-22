@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3-Inch Thermal Bill Generator</title>
     <style>
-        /* --- Screen Styling (Jo Computer/Phone par dikhega) --- */
+        /* --- Screen Styling (Jo Phone par dikhega) --- */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -157,43 +157,43 @@
         <button class="btn-add" onclick="addItem()">Add Item</button>
     </div>
 
-    <!-- RawBT Isi poore box ka exact virtual image compile karega -->
+    <!-- Is design ka blueprint RawBT direct pick karega -->
     <div class="invoice-box" id="invoice-bill-area">
-        <div style="text-align: center; margin-bottom: 15px;">
-            <h2 style="margin: 0 0 5px 0; font-size: 22px;">MY RETAIL SHOP</h2>
-            <p style="margin: 2px 0; font-size: 12px;">Bhiwandi, Maharashtra, India</p>
-            <p style="margin: 2px 0; font-size: 12px;">Mob: +91 9876543210</p>
+        <div style="text-align: center; margin-bottom: 12px;">
+            <h2 style="margin: 0 0 4px 0; font-size: 24px; font-weight: bold; letter-spacing: 1px;">MY RETAIL SHOP</h2>
+            <p style="margin: 2px 0; font-size: 13px;">Bhiwandi, Maharashtra, India</p>
+            <p style="margin: 2px 0; font-size: 13px;">Mob: +91 9876543210</p>
         </div>
         
-        <hr style="border-top: 1px dashed #000;">
+        <div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
 
-        <div style="font-size: 13px; margin-bottom: 10px;">
-            <p style="margin: 3px 0;"><b>Bill No:</b> #<span id="bill-no">1024</span></p>
-            <p style="margin: 3px 0;"><b>Order No:</b> <span id="order-no">--</span></p>
-            <p style="margin: 3px 0;"><b>Table No:</b> <span id="table-number" style="font-weight: bold;">--</span></p>
-            <p style="margin: 3px 0;"><b>Date:</b> <span id="bill-date">--</span></p>
+        <div style="font-size: 14px; margin-bottom: 10px; line-height: 1.4;">
+            <p style="margin: 2px 0;"><b>Bill No:</b> #<span id="bill-no">1024</span></p>
+            <p style="margin: 2px 0;"><b>Order No:</b> <span id="order-no">--</span></p>
+            <p style="margin: 2px 0;"><b>Table No:</b> <span id="table-number" style="font-weight: bold;">--</span></p>
+            <p style="margin: 2px 0;"><b>Date:</b> <span id="bill-date">--</span></p>
         </div>
 
         <table id="bill-table">
             <thead>
                 <tr>
-                    <th>Item</th>
-                    <th class="text-right">Qty</th>
-                    <th class="text-right">Rate</th>
-                    <th class="text-right">Total</th>
-                    <th class="delete-col text-right">Action</th>
+                    <th style="font-weight: bold; border-bottom: 1px dashed #000;">Item</th>
+                    <th class="text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Qty</th>
+                    <th class="text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Rate</th>
+                    <th class="text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Total</th>
+                    <th class="delete-col text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Action</th>
                 </tr>
             </thead>
             <tbody id="bill-items">
             </tbody>
         </table>
 
-        <div class="total-section">
+        <div class="total-section" style="margin-top: 15px; border-top: 1px dashed #000; padding-top: 8px;">
             <span>Grand Total: ₹<span id="grand-total">0.00</span></span>
         </div>
 
-        <hr style="border-top: 1px dashed #000; margin-top: 15px;">
-        <p style="text-align: center; font-size: 12px; font-style: italic;">Thank You! Visit Again.</p>
+        <div style="border-top: 1px dashed #000; margin: 15px 0 8px 0;"></div>
+        <p style="text-align: center; font-size: 13px; font-style: italic; margin: 0;">Thank You! Visit Again.</p>
     </div>
 
     <div class="btn-container no-print">
@@ -275,7 +275,7 @@
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
         }
 
-        // --- NEW FIXED HTML INTENT FOR TSPL PRINTERS ---
+        // --- THE ULTIMATE BASE64-HTML PIPELINE METHOD ---
         function printViaRawBT() {
             let tableRows = document.querySelectorAll("#bill-items tr");
             if(tableRows.length === 0) {
@@ -283,39 +283,41 @@
                 return;
             }
 
-            // Cloned Area to avoid modifying screen UI during action
+            // HTML layout clone to isolate print view
             let billClone = document.getElementById("invoice-bill-area").cloneNode(true);
             
-            // Removing action/delete columns from the compiled HTML code string
+            // Delete column cleanup
             let deleteCols = billClone.querySelectorAll(".delete-col");
             deleteCols.forEach(col => col.remove());
 
-            // Dynamic Thermal Font Wrapper CSS Injection
+            // Exact 3-inch (80mm) Thermal Optimization CSS
             let htmlStyles = `
                 <style>
                     body { 
-                        width: 100%; 
+                        width: 560px; /* Force sharp 3-inch render density */
                         margin: 0; 
                         padding: 10px; 
-                        font-family: monospace; 
-                        font-size: 14px; 
+                        font-family: 'Courier New', Courier, monospace; 
                         color: #000; 
                         background: #fff;
+                        font-size: 16px;
                     }
                     table { width: 100%; border-collapse: collapse; }
-                    th, td { padding: 4px 0; text-align: left; border-bottom: 1px dashed #000; font-size: 13px; }
+                    th, td { padding: 6px 0; text-align: left; border-bottom: 1px dashed #000; font-size: 15px; }
                     .text-right { text-align: right; }
-                    .total-section { margin-top: 12px; text-align: right; font-weight: bold; font-size: 16px; }
-                    hr { border-top: 1px dashed #000; margin: 10px 0; }
+                    .total-section { margin-top: 15px; text-align: right; font-weight: bold; font-size: 18px; }
                 </style>
             `;
 
-            let finalHtmlContent = "<html><head>" + htmlStyles + "</head><body>" + billClone.innerHTML + "</body></html>";
+            let fullHtmlString = "<html><head><meta charset='utf-8'>" + htmlStyles + "</head><body>" + billClone.innerHTML + "</body></html>";
 
-            // Direct HTML Intent call to RawBT system virtual driver
-            let rawbtUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.html=" + encodeURIComponent(finalHtmlContent) + ";end;";
+            // Safe Base64 Encoding for RawBT HTML parser bypass injection
+            let base64Html = btoa(unescape(encodeURIComponent(fullHtmlString)));
+
+            // RawBT Dynamic Intent Link construction
+            let intentUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64html=" + base64Html + ";end;";
             
-            window.location.href = rawbtUrl;
+            window.location.href = intentUrl;
         }
     </script>
 
