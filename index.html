@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3-Inch Thermal Bill Generator</title>
+    <title>3-Inch Thermal Bill & PDF Generator</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         /* --- Screen Styling --- */
         body {
@@ -55,11 +58,14 @@
         }
         
         .btn-container {
-            text-align: center;
-            margin-top: 20px;
+            max-width: 440px;
+            margin: 20px auto 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
         button {
-            padding: 10px 20px;
+            padding: 12px;
             font-size: 15px;
             border: none;
             cursor: pointer;
@@ -73,15 +79,19 @@
             margin-top: 5px;
         }
         .btn-add:hover { background-color: #0056b3; }
-        .btn-print {
+        
+        .btn-print-text {
             background-color: #28a745;
             color: white;
-            width: 100%;
-            max-width: 400px;
-            padding: 12px;
-            font-size: 16px;
         }
-        .btn-print:hover { background-color: #218838; }
+        .btn-print-text:hover { background-color: #218838; }
+
+        .btn-print-pdf {
+            background-color: #ff9800;
+            color: white;
+        }
+        .btn-print-pdf:hover { background-color: #e68a00; }
+
         .btn-delete {
             background-color: #dc3545;
             color: white;
@@ -111,7 +121,7 @@
         }
 
         @media print {
-            body, .item-form, .invoice-box, .btn-container {
+            body, .item-form, .btn-container {
                 display: none;
             }
         }
@@ -119,7 +129,7 @@
 </head>
 <body>
 
-    <div class="item-form no-print">
+    <div class="item-form">
         <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">Bill Details</h3>
         
         <div class="form-row">
@@ -128,7 +138,7 @@
                 <input type="text" id="input-bill-no" value="1024" oninput="updateBillNo()">
             </div>
             <div class="form-group">
-                <label>Order / Token No:</label>
+                <label>Order / Token:</label>
                 <input type="text" id="input-order-no" placeholder="e.g. 45" oninput="updateOrderNo()">
             </div>
             <div class="form-group">
@@ -157,7 +167,6 @@
         <button class="btn-add" onclick="addItem()">Add Item</button>
     </div>
 
-    <!-- Bill Preview Area -->
     <div class="invoice-box" id="invoice-bill-area">
         <div style="text-align: center; margin-bottom: 12px;">
             <h2 style="margin: 0 0 4px 0; font-size: 22px; font-weight: bold;">MY RETAIL SHOP</h2>
@@ -196,13 +205,15 @@
         <p style="text-align: center; font-size: 13px; font-style: italic; margin: 0;">Thank You! Visit Again.</p>
     </div>
 
-    <div class="btn-container no-print">
-        <button class="btn-print" onclick="printViaRawBT()">Print Bill</button>
+    <div class="btn-container">
+        <button class="btn-print-text" onclick="printViaText()">Option 1: Print via Text (Fast ESC/POS)</button>
+        <button class="btn-print-pdf" onclick="printViaPDF()">Option 2: Print via PDF (3-Inch Graphic)</button>
     </div>
 
     <script>
         var totalAmount = 0;
 
+        // Auto initialization on load
         window.onload = function() {
             var randomTable = Math.floor(Math.random() * 8) + 1;
             document.getElementById("input-table-no").value = randomTable;
@@ -213,20 +224,10 @@
             document.getElementById("bill-date").innerText = dateStr;
         };
 
-        function updateBillNo() {
-            var val = document.getElementById("input-bill-no").value;
-            document.getElementById("bill-no").innerText = val ? val : "--";
-        }
-
-        function updateOrderNo() {
-            var val = document.getElementById("input-order-no").value;
-            document.getElementById("order-no").innerText = val ? val : "--";
-        }
-
-        function updateTableNo() {
-            var val = document.getElementById("input-table-no").value;
-            document.getElementById("table-number").innerText = val ? val : "--";
-        }
+        // UI Mirror binding functions
+        function updateBillNo() { document.getElementById("bill-no").innerText = document.getElementById("input-bill-no").value || "--"; }
+        function updateOrderNo() { document.getElementById("order-no").innerText = document.getElementById("input-order-no").value || "--"; }
+        function updateTableNo() { document.getElementById("table-number").innerText = document.getElementById("input-table-no").value || "--"; }
 
         function checkEnter(event) {
             if (event.key === "Enter") {
@@ -235,13 +236,14 @@
             }
         }
 
+        // Add dynamic rows
         function addItem() {
             var name = document.getElementById("item-name").value;
             var qty = parseInt(document.getElementById("item-qty").value);
             var price = parseFloat(document.getElementById("item-price").value);
 
             if(name === "" || isNaN(qty) || isNaN(price) || qty <= 0 || price <= 0) {
-                alert("Please enter valid Item Name, Quantity and Rate!");
+                alert("Please enter valid Item details!");
                 return;
             }
 
@@ -262,12 +264,14 @@
             tbody.appendChild(row);
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
 
+            // Clear item input nodes
             document.getElementById("item-name").value = "";
             document.getElementById("item-qty").value = "1";
             document.getElementById("item-price").value = "";
             document.getElementById("item-name").focus();
         }
 
+        // Delete explicit row
         function deleteItem(button, itemTotal) {
             var row = button.parentNode.parentNode;
             row.parentNode.removeChild(row);
@@ -275,49 +279,146 @@
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
         }
 
-        // --- OFFICIAL RAWBT S.html INTENT METHOD ---
-        function printViaRawBT() {
+        // ================= METHOD 1: PLAIN TEXT ESC/POS =================
+        function printViaText() {
             let tableRows = document.querySelectorAll("#bill-items tr");
             if(tableRows.length === 0) {
-                alert("Please add at least one item to print!");
+                alert("Please add items first!");
                 return;
             }
 
-            // Copying bill layout
-            let billClone = document.getElementById("invoice-bill-area").cloneNode(true);
+            let text = "";
+            text += "         MY RETAIL SHOP          \n";
+            text += "   Bhiwandi, Maharashtra, India  \n";
+            text += "        Mob: +91 9876543210      \n";
+            text += "------------------------------------------------\n";
+            text += "Bill No:  #" + document.getElementById("bill-no").innerText + "\n";
+            text += "Order No: " + document.getElementById("order-no").innerText + "\n";
+            text += "Table No: " + document.getElementById("table-number").innerText + "\n";
+            text += "Date:     " + document.getElementById("bill-date").innerText + "\n";
+            text += "------------------------------------------------\n";
+            text += "Item Name          Qty    Rate          Total   \n";
+            text += "------------------------------------------------\n";
+
+            tableRows.forEach(row => {
+                let cols = row.querySelectorAll("td");
+                if(cols.length >= 4) {
+                    let name = cols[0].innerText;
+                    let qty = cols[1].innerText;
+                    let rate = cols[2].innerText.replace('₹', '');
+                    let total = cols[3].innerText.replace('₹', '');
+                    
+                    let itemLine = name.substring(0, 18).padEnd(19, ' ') + 
+                                   qty.padStart(4, ' ') + 
+                                   rate.padStart(11, ' ') + 
+                                   total.padStart(14, ' ') + "\n";
+                    text += itemLine;
+                }
+            });
+
+            text += "------------------------------------------------\n";
+            let totalVal = document.getElementById("grand-total").innerText;
+            text += "Grand Total:".padEnd(30, ' ') + ("INR " + totalVal).padStart(18, ' ') + "\n";
+            text += "------------------------------------------------\n\n";
+            text += "          Thank You! Visit Again.       \n\n\n\n";
+
+            let intentUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(text) + ";end;";
+            window.location.href = intentUrl;
+        }
+
+        // ================= METHOD 2: DIRECT 3-INCH PDF GENERATION =================
+        function printViaPDF() {
+            let tableRows = document.querySelectorAll("#bill-items tr");
+            if(tableRows.length === 0) {
+                alert("Please add items first!");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
             
-            // UI Action Buttons remove kar rahe hain print se
-            let deleteCols = billClone.querySelectorAll(".delete-col");
-            deleteCols.forEach(col => col.remove());
+            // 80mm width standard thermal footprint roll scaling metrics 
+            // Calculate height dynamically based on items array length to avoid whitespace trail
+            let dynamicHeight = 110 + (tableRows.length * 8); 
 
-            // Thermal Printer Optimized Stylesheet
-            let htmlStyles = `
-                <style>
-                    body { 
-                        width: 100%; 
-                        margin: 0; 
-                        padding: 5px; 
-                        font-family: monospace; 
-                        color: #000; 
-                        background: #fff;
-                        font-size: 14px;
-                    }
-                    table { width: 100%; border-collapse: collapse; }
-                    th, td { padding: 5px 0; text-align: left; border-bottom: 1px dashed #000; font-size: 13px; }
-                    .text-right { text-align: right; }
-                    .total-section { margin-top: 12px; text-align: right; font-weight: bold; font-size: 16px; }
-                </style>
-            `;
+            const doc = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: [80, dynamicHeight]
+            });
 
-            // Clean single HTML document compile 
-            let fullHtmlString = "<html><head><meta charset='utf-8'>" + htmlStyles + "</head><body>" + billClone.innerHTML + "</body></html>";
+            // Set monospace ticket font for perfect tracking alignment
+            doc.setFont("courier", "normal");
 
-            // Official RawBT Intent Syntax string injection
-            let intentUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.html=" + encodeURIComponent(fullHtmlString) + ";end;";
+            // Header Section
+            doc.setFontSize(14);
+            doc.setFont("courier", "bold");
+            doc.text("MY RETAIL SHOP", 40, 10, { align: 'center' });
             
+            doc.setFontSize(9);
+            doc.setFont("courier", "normal");
+            doc.text("Bhiwandi, Maharashtra, India", 40, 15, { align: 'center' });
+            doc.text("Mob: +91 9876543210", 40, 19, { align: 'center' });
+            
+            doc.text("------------------------------------------", 4, 24);
+            
+            // Meta Info
+            doc.text("Bill No:  #" + document.getElementById("bill-no").innerText, 5, 29);
+            doc.text("Order No: " + document.getElementById("order-no").innerText, 5, 34);
+            doc.text("Table No: " + document.getElementById("table-number").innerText, 5, 39);
+            doc.text("Date:     " + document.getElementById("bill-date").innerText, 5, 44);
+            
+            doc.text("------------------------------------------", 4, 49);
+            
+            // Table Header 
+            doc.setFont("courier", "bold");
+            doc.text("Item Name        Qty   Rate       Total", 5, 54);
+            doc.text("------------------------------------------", 4, 58);
+            
+            // Print Rows
+            doc.setFont("courier", "normal");
+            let currentY = 63;
+            
+            tableRows.forEach(row => {
+                let cols = row.querySelectorAll("td");
+                if(cols.length >= 4) {
+                    let name = cols[0].innerText.substring(0, 15);
+                    let qty = cols[1].innerText;
+                    let rate = cols[2].innerText.replace('₹', '');
+                    let total = cols[3].innerText.replace('₹', '');
+
+                    // Alignment padding algorithm logic for 80mm PDF view
+                    let lineStr = name.padEnd(16, ' ') + 
+                                  qty.padStart(4, ' ') + 
+                                  rate.padStart(9, ' ') + 
+                                  total.padStart(12, ' ');
+                                  
+                    doc.text(lineStr, 5, currentY);
+                    currentY += 6;
+                }
+            });
+
+            // Total Block calculation
+            doc.text("------------------------------------------", 4, currentY);
+            currentY += 5;
+            doc.setFont("courier", "bold");
+            let totalVal = document.getElementById("grand-total").innerText;
+            doc.text("Grand Total: " + "INR " + totalVal, 5, currentY);
+            
+            // Footer Section
+            currentY += 6;
+            doc.text("------------------------------------------", 4, currentY);
+            currentY += 6;
+            doc.setFont("courier", "italic");
+            doc.text("Thank You! Visit Again.", 40, currentY, { align: 'center' });
+
+            // Generate explicit raw Base64 data bundle array
+            let rawPdfUri = doc.output('datauristring');
+            let base64Data = rawPdfUri.split(',')[1];
+
+            // Official RawBT Android PDF Payload Intent Engine trigger
+            let intentUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.pdf=" + encodeURIComponent(base64Data) + ";end;";
             window.location.href = intentUrl;
         }
     </script>
-
 </body>
 </html>
