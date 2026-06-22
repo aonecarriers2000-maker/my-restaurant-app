@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3-Inch Thermal Bill Generator</title>
     <style>
-        /* --- Screen Styling (Jo Phone par dikhega) --- */
+        /* --- Screen Styling --- */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -157,10 +157,10 @@
         <button class="btn-add" onclick="addItem()">Add Item</button>
     </div>
 
-    <!-- Is design ka blueprint RawBT direct pick karega -->
+    <!-- Bill Preview Area -->
     <div class="invoice-box" id="invoice-bill-area">
         <div style="text-align: center; margin-bottom: 12px;">
-            <h2 style="margin: 0 0 4px 0; font-size: 24px; font-weight: bold; letter-spacing: 1px;">MY RETAIL SHOP</h2>
+            <h2 style="margin: 0 0 4px 0; font-size: 22px; font-weight: bold;">MY RETAIL SHOP</h2>
             <p style="margin: 2px 0; font-size: 13px;">Bhiwandi, Maharashtra, India</p>
             <p style="margin: 2px 0; font-size: 13px;">Mob: +91 9876543210</p>
         </div>
@@ -275,7 +275,7 @@
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
         }
 
-        // --- THE ULTIMATE BASE64-HTML PIPELINE METHOD ---
+        // --- OFFICIAL RAWBT S.html INTENT METHOD ---
         function printViaRawBT() {
             let tableRows = document.querySelectorAll("#bill-items tr");
             if(tableRows.length === 0) {
@@ -283,39 +283,37 @@
                 return;
             }
 
-            // HTML layout clone to isolate print view
+            // Copying bill layout
             let billClone = document.getElementById("invoice-bill-area").cloneNode(true);
             
-            // Delete column cleanup
+            // UI Action Buttons remove kar rahe hain print se
             let deleteCols = billClone.querySelectorAll(".delete-col");
             deleteCols.forEach(col => col.remove());
 
-            // Exact 3-inch (80mm) Thermal Optimization CSS
+            // Thermal Printer Optimized Stylesheet
             let htmlStyles = `
                 <style>
                     body { 
-                        width: 560px; /* Force sharp 3-inch render density */
+                        width: 100%; 
                         margin: 0; 
-                        padding: 10px; 
-                        font-family: 'Courier New', Courier, monospace; 
+                        padding: 5px; 
+                        font-family: monospace; 
                         color: #000; 
                         background: #fff;
-                        font-size: 16px;
+                        font-size: 14px;
                     }
                     table { width: 100%; border-collapse: collapse; }
-                    th, td { padding: 6px 0; text-align: left; border-bottom: 1px dashed #000; font-size: 15px; }
+                    th, td { padding: 5px 0; text-align: left; border-bottom: 1px dashed #000; font-size: 13px; }
                     .text-right { text-align: right; }
-                    .total-section { margin-top: 15px; text-align: right; font-weight: bold; font-size: 18px; }
+                    .total-section { margin-top: 12px; text-align: right; font-weight: bold; font-size: 16px; }
                 </style>
             `;
 
+            // Clean single HTML document compile 
             let fullHtmlString = "<html><head><meta charset='utf-8'>" + htmlStyles + "</head><body>" + billClone.innerHTML + "</body></html>";
 
-            // Safe Base64 Encoding for RawBT HTML parser bypass injection
-            let base64Html = btoa(unescape(encodeURIComponent(fullHtmlString)));
-
-            // RawBT Dynamic Intent Link construction
-            let intentUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64html=" + base64Html + ";end;";
+            // Official RawBT Intent Syntax string injection
+            let intentUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.html=" + encodeURIComponent(fullHtmlString) + ";end;";
             
             window.location.href = intentUrl;
         }
