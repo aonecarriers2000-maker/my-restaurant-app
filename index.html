@@ -9,7 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        /* --- Screen Styling --- */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -24,8 +23,6 @@
             border: 1px solid #eee;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
         }
-        
-        /* Input Form Styling */
         .item-form {
             max-width: 360px;
             margin: 0 auto 20px auto;
@@ -57,7 +54,6 @@
         .form-row .form-group {
             flex: 1;
         }
-        
         .btn-container {
             max-width: 390px;
             margin: 20px auto 0 auto;
@@ -79,20 +75,14 @@
             width: 100%;
             margin-top: 5px;
         }
-        .btn-add:hover { background-color: #0056b3; }
-        
         .btn-print-text {
             background-color: #28a745;
             color: white;
         }
-        .btn-print-text:hover { background-color: #218838; }
-
         .btn-print-pdf {
             background-color: #ff9800;
             color: white;
         }
-        .btn-print-pdf:hover { background-color: #e68a00; }
-
         .btn-delete {
             background-color: #dc3545;
             color: white;
@@ -100,8 +90,6 @@
             font-size: 12px;
             border-radius: 3px;
         }
-        .btn-delete:hover { background-color: #bd2130; }
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -127,7 +115,6 @@
 
     <div class="item-form">
         <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">Bill Details</h3>
-        
         <div class="form-row">
             <div class="form-group">
                 <label>Bill No:</label>
@@ -135,31 +122,29 @@
             </div>
             <div class="form-group">
                 <label>Order / Token:</label>
-                <input type="text" id="input-order-no" placeholder="e.g. 45" oninput="updateOrderNo()">
+                <input type="text" id="input-order-no" placeholder="--" oninput="updateOrderNo()">
             </div>
             <div class="form-group">
                 <label>Table No:</label>
-                <input type="text" id="input-table-no" placeholder="e.g. 5" oninput="updateTableNo()">
+                <input type="text" id="input-table-no" placeholder="2" oninput="updateTableNo()">
             </div>
         </div>
 
         <h3 style="margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Add Items</h3>
         <div class="form-group">
             <label>Item Name:</label>
-            <input type="text" id="item-name" placeholder="e.g. Samosa">
+            <input type="text" id="item-name" placeholder="e.g. Biryani">
         </div>
-        
         <div class="form-row">
             <div class="form-group">
                 <label>Quantity:</label>
-                <input type="number" id="item-qty" value="1" min="1" onkeydown="checkEnter(event)">
+                <input type="number" id="item-qty" value="1" min="1">
             </div>
             <div class="form-group">
-                <label>Rate / Price (₹):</label>
-                <input type="number" id="item-price" placeholder="0.00" step="0.01" onkeydown="checkEnter(event)">
+                <label>Rate (₹):</label>
+                <input type="number" id="item-price" placeholder="0.00" step="0.01">
             </div>
         </div>
-        
         <button class="btn-add" onclick="addItem()">Add Item</button>
     </div>
 
@@ -175,7 +160,7 @@
         <div style="font-size: 12px; margin-bottom: 10px; line-height: 1.4;">
             <p style="margin: 2px 0;"><b>Bill No:</b> #<span id="bill-no">1024</span></p>
             <p style="margin: 2px 0;"><b>Order No:</b> <span id="order-no">--</span></p>
-            <p style="margin: 2px 0;"><b>Table No:</b> <span id="table-number" style="font-weight: bold;">--</span></p>
+            <p style="margin: 2px 0;"><b>Table No:</b> <span id="table-number">2</span></p>
             <p style="margin: 2px 0;"><b>Date:</b> <span id="bill-date">--</span></p>
         </div>
 
@@ -202,17 +187,13 @@
 
     <div class="btn-container">
         <button class="btn-print-text" onclick="printViaText()">Option 1: Print via Text (Fast ESC/POS)</button>
-        <button class="btn-print-pdf" onclick="printViaPDF()">Option 2: Print via PDF (3-Inch Graphical)</button>
+        <button class="btn-print-pdf" onclick="printViaPDF()">Option 2: Print via PDF (3-Inch Graphic)</button>
     </div>
 
     <script>
         var totalAmount = 0;
 
         window.onload = function() {
-            var randomTable = Math.floor(Math.random() * 8) + 1;
-            document.getElementById("input-table-no").value = randomTable;
-            document.getElementById("table-number").innerText = randomTable;
-
             var today = new Date();
             var dateStr = today.getDate() + '-' + (today.getMonth()+1) + '-' + today.getFullYear();
             document.getElementById("bill-date").innerText = dateStr;
@@ -222,20 +203,13 @@
         function updateOrderNo() { document.getElementById("order-no").innerText = document.getElementById("input-order-no").value || "--"; }
         function updateTableNo() { document.getElementById("table-number").innerText = document.getElementById("input-table-no").value || "--"; }
 
-        function checkEnter(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                addItem();
-            }
-        }
-
         function addItem() {
             var name = document.getElementById("item-name").value;
             var qty = parseInt(document.getElementById("item-qty").value);
             var price = parseFloat(document.getElementById("item-price").value);
 
-            if(name === "" || isNaN(qty) || isNaN(price) || qty <= 0 || price <= 0) {
-                alert("Please enter valid Item details!");
+            if(name === "" || isNaN(qty) || isNaN(price)) {
+                alert("Please fill details");
                 return;
             }
 
@@ -256,9 +230,7 @@
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
 
             document.getElementById("item-name").value = "";
-            document.getElementById("item-qty").value = "1";
             document.getElementById("item-price").value = "";
-            document.getElementById("item-name").focus();
         }
 
         function deleteItem(button, itemTotal) {
@@ -268,13 +240,10 @@
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
         }
 
-        // ================= METHOD 1: PLAIN TEXT ESC/POS =================
+        // ================= FIX METHOD 1: STANDARD RAWBT TEXT INTENT =================
         function printViaText() {
             let tableRows = document.querySelectorAll("#bill-items tr");
-            if(tableRows.length === 0) {
-                alert("Please add items first!");
-                return;
-            }
+            if(tableRows.length === 0) { alert("Please add items first!"); return; }
 
             let text = "";
             text += "         MY RETAIL SHOP          \n";
@@ -296,12 +265,7 @@
                     let qty = cols[1].innerText;
                     let rate = cols[2].innerText.replace('₹', '');
                     let total = cols[3].innerText.replace('₹', '');
-                    
-                    let itemLine = name.substring(0, 18).padEnd(19, ' ') + 
-                                   qty.padStart(4, ' ') + 
-                                   rate.padStart(11, ' ') + 
-                                   total.padStart(14, ' ') + "\n";
-                    text += itemLine;
+                    text += name.substring(0, 18).padEnd(19, ' ') + qty.padStart(4, ' ') + rate.padStart(11, ' ') + total.padStart(14, ' ') + "\n";
                 }
             });
 
@@ -311,46 +275,44 @@
             text += "------------------------------------------------\n\n";
             text += "          Thank You! Visit Again.       \n\n\n\n";
 
-            let intentUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(text) + ";end;";
-            window.location.href = intentUrl;
+            // Safe Android intent formatting
+            let url = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(text) + ";end;";
+            window.location.href = url;
         }
 
-        // ================= METHOD 2: 100% PERFECT 3-INCH PDF (IMAGE METHOD) =================
+        // ================= FIX METHOD 2: GRAPHIC PDF VIA BASE64 INTENT =================
         function printViaPDF() {
             let tableRows = document.querySelectorAll("#bill-items tr");
-            if(tableRows.length === 0) {
-                alert("Please add items first!");
-                return;
-            }
+            if(tableRows.length === 0) { alert("Please add items first!"); return; }
 
-            // Temporarily hide action buttons so they don't show up in the PDF
             let deleteButtons = document.querySelectorAll(".btn-delete");
             deleteButtons.forEach(btn => btn.style.display = "none");
 
             const element = document.getElementById("invoice-bill-area");
 
-            // Convert HTML Div directly into a High-Quality Image first
             html2canvas(element, { scale: 2 }).then(canvas => {
-                // Restore delete buttons on screen
                 deleteButtons.forEach(btn => btn.style.display = "inline-block");
 
-                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
                 const { jsPDF } = window.jspdf;
 
-                // 3-inch size alignment (approx 76mm width)
                 const imgWidth = 76; 
                 const pageHeight = (canvas.height * imgWidth) / canvas.width;
 
                 const doc = new jsPDF({
                     orientation: 'p',
                     unit: 'mm',
-                    format: [imgWidth, pageHeight + 10]
+                    format: [imgWidth, pageHeight + 5]
                 });
 
                 doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, pageHeight);
                 
-                // Save and trigger Android default share/print view which safely sends heavy files to RawBT
-                doc.output('dataurlnewwindow');
+                // base64 pdf string output bina window open kiye
+                let pdfBase64 = doc.output('datauristring').split(',')[1];
+                
+                // RawBT Intent for raw base64 PDF processing
+                let url = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64=" + encodeURIComponent(pdfBase64) + ";S.extension=pdf;end;";
+                window.location.href = url;
             });
         }
     </script>
