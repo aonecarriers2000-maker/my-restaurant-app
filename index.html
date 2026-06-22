@@ -157,6 +157,7 @@
         <button class="btn-add" onclick="addItem()">Add Item</button>
     </div>
 
+    <!-- RawBT Isi poore box ka exact virtual image compile karega -->
     <div class="invoice-box" id="invoice-bill-area">
         <div style="text-align: center; margin-bottom: 15px;">
             <h2 style="margin: 0 0 5px 0; font-size: 22px;">MY RETAIL SHOP</h2>
@@ -274,7 +275,7 @@
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
         }
 
-        // --- NEW ALTERNATIVE RAWBT CONTROLLER ---
+        // --- NEW FIXED HTML INTENT FOR TSPL PRINTERS ---
         function printViaRawBT() {
             let tableRows = document.querySelectorAll("#bill-items tr");
             if(tableRows.length === 0) {
@@ -282,41 +283,37 @@
                 return;
             }
 
-            // RawBT universal text string payload
-            let shopName   = "         MY RETAIL SHOP\n"; 
-            let address    = "   Bhiwandi, Maharashtra, India\n";
-            let contact    = "        Mob: +91 9876543210\n";
-            let lineSep    = "--------------------------------\n"; 
+            // Cloned Area to avoid modifying screen UI during action
+            let billClone = document.getElementById("invoice-bill-area").cloneNode(true);
             
-            let billNo   = "Bill No:  #" + document.getElementById("bill-no").innerText + "\n";
-            let orderNo  = "Order No: " + document.getElementById("order-no").innerText + "\n";
-            let tableNo  = "Table No: " + document.getElementById("table-number").innerText + "\n";
-            let dateStr  = "Date:     " + document.getElementById("bill-date").innerText + "\n";
-            
-            let tableHeader = "Item Name\n  Qty   x   Rate        Total\n";
-            
-            let itemsText = "";
-            tableRows.forEach(row => {
-                let cols = row.querySelectorAll("td");
-                if(cols.length >= 4) {
-                    let name = cols[0].innerText;
-                    let qty = cols[1].innerText;
-                    let rate = cols[2].innerText.replace('₹', '');
-                    let total = cols[3].innerText.replace('₹', '');
-                    itemsText += `${name}\n  ${qty}   x   ${rate}       ${total}\n`;
-                }
-            });
-            
-            let grandTotal = "Grand Total:          INR " + document.getElementById("grand-total").innerText + "\n";
-            let footer = "\n    Thank You! Visit Again.\n\n\n\n"; 
+            // Removing action/delete columns from the compiled HTML code string
+            let deleteCols = billClone.querySelectorAll(".delete-col");
+            deleteCols.forEach(col => col.remove());
 
-            let billDataCombined = shopName + address + contact + lineSep + billNo + orderNo + tableNo + dateStr + lineSep + tableHeader + lineSep + itemsText + lineSep + grandTotal + lineSep + footer;
+            // Dynamic Thermal Font Wrapper CSS Injection
+            let htmlStyles = `
+                <style>
+                    body { 
+                        width: 100%; 
+                        margin: 0; 
+                        padding: 10px; 
+                        font-family: monospace; 
+                        font-size: 14px; 
+                        color: #000; 
+                        background: #fff;
+                    }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { padding: 4px 0; text-align: left; border-bottom: 1px dashed #000; font-size: 13px; }
+                    .text-right { text-align: right; }
+                    .total-section { margin-top: 12px; text-align: right; font-weight: bold; font-size: 16px; }
+                    hr { border-top: 1px dashed #000; margin: 10px 0; }
+                </style>
+            `;
 
-            // URL format fallback change: base64 instead of raw encoding to force PRN render text engine bypass
-            let base64EncodedBill = btoa(unescape(encodeURIComponent(billDataCombined)));
-            
-            // RawBT dynamic base64 handling sequence
-            let rawbtUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64=" + base64EncodedBill + ";end;";
+            let finalHtmlContent = "<html><head>" + htmlStyles + "</head><body>" + billClone.innerHTML + "</body></html>";
+
+            // Direct HTML Intent call to RawBT system virtual driver
+            let rawbtUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.html=" + encodeURIComponent(finalHtmlContent) + ";end;";
             
             window.location.href = rawbtUrl;
         }
