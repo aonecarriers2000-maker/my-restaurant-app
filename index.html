@@ -110,7 +110,6 @@
             font-size: 18px;
         }
 
-        /* Screen clean rakhne ke liye default print media disabled */
         @media print {
             body, .item-form, .invoice-box, .btn-container {
                 display: none;
@@ -158,7 +157,7 @@
         <button class="btn-add" onclick="addItem()">Add Item</button>
     </div>
 
-    <div class="invoice-box">
+    <div class="invoice-box" id="invoice-bill-area">
         <div style="text-align: center; margin-bottom: 15px;">
             <h2 style="margin: 0 0 5px 0; font-size: 22px;">MY RETAIL SHOP</h2>
             <p style="margin: 2px 0; font-size: 12px;">Bhiwandi, Maharashtra, India</p>
@@ -262,7 +261,6 @@
             tbody.appendChild(row);
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
 
-            // Auto Reset and Focus Back to Item Name
             document.getElementById("item-name").value = "";
             document.getElementById("item-qty").value = "1";
             document.getElementById("item-price").value = "";
@@ -276,7 +274,7 @@
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
         }
 
-        // --- RAWBT BLUETOOTH PRINTER HANDLER ---
+        // --- NEW ALTERNATIVE RAWBT CONTROLLER ---
         function printViaRawBT() {
             let tableRows = document.querySelectorAll("#bill-items tr");
             if(tableRows.length === 0) {
@@ -284,7 +282,7 @@
                 return;
             }
 
-            // Text Alignment Layout Formatting
+            // RawBT universal text string payload
             let shopName   = "         MY RETAIL SHOP\n"; 
             let address    = "   Bhiwandi, Maharashtra, India\n";
             let contact    = "        Mob: +91 9876543210\n";
@@ -305,7 +303,6 @@
                     let qty = cols[1].innerText;
                     let rate = cols[2].innerText.replace('₹', '');
                     let total = cols[3].innerText.replace('₹', '');
-                    
                     itemsText += `${name}\n  ${qty}   x   ${rate}       ${total}\n`;
                 }
             });
@@ -313,11 +310,13 @@
             let grandTotal = "Grand Total:          INR " + document.getElementById("grand-total").innerText + "\n";
             let footer = "\n    Thank You! Visit Again.\n\n\n\n"; 
 
-            // Final Compiled Data String
-            let rawData = shopName + address + contact + lineSep + billNo + orderNo + tableNo + dateStr + lineSep + tableHeader + lineSep + itemsText + lineSep + grandTotal + lineSep + footer;
+            let billDataCombined = shopName + address + contact + lineSep + billNo + orderNo + tableNo + dateStr + lineSep + tableHeader + lineSep + itemsText + lineSep + grandTotal + lineSep + footer;
 
-            // Triggering RawBT Android Intent
-            let rawbtUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(rawData) + ";end;";
+            // URL format fallback change: base64 instead of raw encoding to force PRN render text engine bypass
+            let base64EncodedBill = btoa(unescape(encodeURIComponent(billDataCombined)));
+            
+            // RawBT dynamic base64 handling sequence
+            let rawbtUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64=" + base64EncodedBill + ";end;";
             
             window.location.href = rawbtUrl;
         }
