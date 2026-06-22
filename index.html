@@ -110,7 +110,7 @@
         @media print {
             @page {
                 size: 3in auto;
-                margin: 0;
+                margin: 0; /* Web-margin zero karke custom internal space denge */
             }
             body {
                 width: 3in;
@@ -124,10 +124,12 @@
             .invoice-box {
                 width: 3in !important;
                 max-width: 3in !important;
-                padding: 5px !important;
+                /* YAHAN CHANGES KIYE HAIN: Left aur Right mein padding jodh di hai */
+                padding: 5px 4mm 5px 4mm !important; 
                 margin: 0 !important;
                 border: none !important;
                 box-shadow: none !important;
+                box-sizing: border-box !important; /* Isse padding andar ki taraf dabeegi */
             }
             table {
                 width: 100% !important;
@@ -231,29 +233,24 @@
         var totalAmount = 0;
 
         window.onload = function() {
-            // 1. Random Table Number (1 to 8)
             var randomTable = Math.floor(Math.random() * 8) + 1;
             document.getElementById("table-number").innerText = randomTable;
 
-            // 2. Automatic Date
             var today = new Date();
             var dateStr = today.getDate() + '-' + (today.getMonth()+1) + '-' + today.getFullYear();
             document.getElementById("bill-date").innerText = dateStr;
         };
 
-        // Live Bill Number Update karne ke liye
         function updateBillNo() {
             var val = document.getElementById("input-bill-no").value;
             document.getElementById("bill-no").innerText = val ? val : "--";
         }
 
-        // Live Order Number Update karne ke liye
         function updateOrderNo() {
             var val = document.getElementById("input-order-no").value;
             document.getElementById("order-no").innerText = val ? val : "--";
         }
 
-        // Item ko table mein add karne ka function
         function addItem() {
             var name = document.getElementById("item-name").value;
             var qty = parseInt(document.getElementById("item-qty").value);
@@ -281,13 +278,11 @@
             tbody.appendChild(row);
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
 
-            // Inputs ko clear karne ke liye
             document.getElementById("item-name").value = "";
             document.getElementById("item-qty").value = "1";
             document.getElementById("item-price").value = "";
         }
 
-        // Item delete karne ka function
         function deleteItem(button, itemTotal) {
             var row = button.parentNode.parentNode;
             row.parentNode.removeChild(row);
