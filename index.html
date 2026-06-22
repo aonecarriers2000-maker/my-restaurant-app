@@ -1,153 +1,191 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>2-Inch Receipt Maker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-Inch Thermal Bill Generator with Barcode</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    
     <style>
-        body { font-family: sans-serif; display: flex; padding: 20px; gap: 20px; background: #f4f4f4; }
-        .controls { width: 320px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .input-box { margin-bottom: 12px; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #555; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; margin-bottom: 10px; }
-        .add-btn { background: #007bff; color: white; }
-        .print-btn { background: #28a745; color: white; }
-        
-        /* Receipt Styling */
-        #receipt { 
-            width: 2in; 
-            background: white; 
-            padding: 10px; 
-            font-family: 'Courier New', monospace; 
-            font-size: 12px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        /* --- Screen Styling (Jo Computer/Phone par dikhega) --- */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
         }
-        .center { text-align: center; }
-        .dashed { border-top: 1px dashed black; margin: 5px 0; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; border-bottom: 1px dashed black; }
-        .total-row { font-weight: bold; display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px; }
+        .invoice-box {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+        }
+        .btn-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th { background-color: #f8f9fa; }
+        .text-right { text-align: right; }
+        .total-section {
+            margin-top: 15px;
+            text-align: right;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .barcode-container {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .barcode-container svg {
+            max-width: 100%;
+            height: auto;
+        }
 
+        /* --- PRINT STYLING (Jo Print button dabane par chalega) --- */
         @media print {
-            .controls { display: none; }
-            body { background: white; padding: 0; justify-content: flex-start; }
-            #receipt { box-shadow: none; width: 2in; margin: 0; border: none; }
-            @page { size: 2in auto; margin: 0; }
+            /* 1. Yeh line printer ko automatic 3 inch par set karegi */
+            @page {
+                size: 3in auto; /* Width 3 inch, height automatic jitna lamba bill ho */
+                margin: 0;      /* Faltu ki khali jagah hatane ke liye */
+            }
+
+            body {
+                width: 3in;
+                margin: 0;
+                padding: 0;
+                background-color: #fff;
+                color: #000;
+                font-size: 14px;
+                font-family: 'Courier New', Courier, monospace;
+            }
+            .invoice-box {
+                width: 3in !important;
+                max-width: 3in !important;
+                padding: 5px !important;
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            table {
+                width: 100% !important;
+                font-size: 13px;
+            }
+            th, td {
+                padding: 6px 2px !important;
+                border-bottom: 1px dashed #000 !important;
+            }
+            .total-section {
+                font-size: 16px !important;
+                border-top: 1px solid #000;
+                padding-top: 5px;
+            }
+            .barcode-container {
+                margin-top: 10px !important;
+                display: block !important;
+            }
+            /* Buttons aur extra cheezein print mein na aayein */
+            .no-print, button, .btn-container {
+                display: none !important;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <h3 style="margin-top: 0;">Receipt Settings</h3>
-        
-        <div class="input-box">
-            <label>Select Date</label>
-            <input type="date" id="manualDate" onchange="updateReceiptDate()">
-        </div>
-
-        <div class="dashed"></div>
-
-        <div class="input-box">
-            <label>Food Item</label>
-            <input type="text" id="foodName" placeholder="e.g. Cold Coffee">
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <div class="input-box" style="flex: 2;">
-                <label>Price</label>
-                <input type="number" id="foodPrice" placeholder="0.00">
-            </div>
-            <div class="input-box" style="flex: 1;">
-                <label>Qty</label>
-                <input type="number" id="foodQty" value="1">
-            </div>
+    <div class="invoice-box">
+        <div style="text-align: center; margin-bottom: 15px;">
+            <h2 style="margin: 0 0 5px 0; font-size: 22px;">MY RETAIL SHOP</h2>
+            <p style="margin: 2px 0; font-size: 12px;">Bhiwandi, Maharashtra, India</p>
+            <p style="margin: 2px 0; font-size: 12px;">Mob: +91 9876543210</p>
         </div>
         
-        <button class="add-btn" onclick="addItemToList()">Add Item</button>
-        <button class="print-btn" onclick="window.print()">Print Receipt (PDF)</button>
-        <button style="background: #f8f9fa; color: #333; border: 1px solid #ccc;" onclick="location.reload()">Clear All</button>
-    </div>
+        <hr style="border-top: 1px dashed #000;">
 
-    <div id="receipt">
-        <div class="center">
-            <strong style="font-size: 16px;">THE FOOD HUB</strong><br>
-            Mumbai, India
+        <div style="font-size: 13px; margin-bottom: 10px;">
+            <p style="margin: 3px 0;"><b>Bill No:</b> #1024</p>
+            <p style="margin: 3px 0;"><b>Date:</b> 22-06-2026</p>
+            <p style="margin: 3px 0;"><b>Table No:</b> <span id="table-number" style="font-weight: bold;">--</span></p>
+            <p style="margin: 3px 0;"><b>Order No:</b> <span id="order-text">ORD9876</span></p>
         </div>
-        <div class="dashed"></div>
-        <div id="displayDate">Date: --/--/----</div>
-        <div>Order: #<span id="orderNum"></span></div>
-        <div class="dashed"></div>
-        
+
         <table>
             <thead>
                 <tr>
                     <th>Item</th>
-                    <th>Qty</th>
-                    <th style="text-align:right">Amt</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Price</th>
                 </tr>
             </thead>
-            <tbody id="billTableBody">
-                </tbody>
+            <tbody>
+                <tr>
+                    <td>Sample Item 1</td>
+                    <td class="text-right">2</td>
+                    <td class="text-right">₹150.00</td>
+                </tr>
+                <tr>
+                    <td>Sample Item 2</td>
+                    <td class="text-right">1</td>
+                    <td class="text-right">₹200.00</td>
+                </tr>
+            </tbody>
         </table>
 
-        <div class="dashed"></div>
-        <div class="total-row">
-            <span>TOTAL:</span>
-            <span>₹<span id="totalPrice">0.00</span></span>
+        <div class="total-section">
+            <span>Grand Total: ₹500.00</span>
         </div>
-        <div class="dashed" style="margin-top:10px"></div>
-        <div class="center" style="font-size: 10px;">Visit Again!</div>
+
+        <hr style="border-top: 1px dashed #000; margin-top: 15px;">
+        
+        <div class="barcode-container">
+            <svg id="barcode"></svg>
+        </div>
+
+        <p style="text-align: center; font-size: 12px; font-style: italic; margin-top: 10px;">Thank You! Visit Again.</p>
+    </div>
+
+    <div class="btn-container no-print">
+        <button onclick="window.print()">Print Bill</button>
     </div>
 
     <script>
-        // Setup initial values
-        let grandTotal = 0;
-        document.getElementById('orderNum').innerText = Math.floor(Math.random() * 10000);
-        
-        // Aaj ki date default set karna
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('manualDate').value = today;
-        updateReceiptDate();
+        window.onload = function() {
+            // 1. Random Table Number (1 to 8)
+            var randomTable = Math.floor(Math.random() * 8) + 1;
+            document.getElementById("table-number").innerText = randomTable;
 
-        function updateReceiptDate() {
-            const dateVal = document.getElementById('manualDate').value;
-            // Format badalne ke liye (YYYY-MM-DD to DD/MM/YYYY)
-            if(dateVal) {
-                const [y, m, d] = dateVal.split('-');
-                document.getElementById('displayDate').innerText = `Date: ${d}/${m}/${y}`;
-            }
-        }
-
-        function addItemToList() {
-            const name = document.getElementById('foodName').value;
-            const price = parseFloat(document.getElementById('foodPrice').value);
-            const qty = parseInt(document.getElementById('foodQty').value);
-
-            if (name.trim() === "" || isNaN(price)) {
-                alert("Please enter Item Name and Price");
-                return;
-            }
-
-            const amount = price * qty;
-            grandTotal += amount;
-
-            // Receipt table mein add karna
-            const tableBody = document.getElementById('billTableBody');
-            const row = tableBody.insertRow();
-            row.innerHTML = `
-                <td style="padding: 2px 0;">${name}</td>
-                <td>${qty}</td>
-                <td style="text-align:right">${amount.toFixed(2)}</td>
-            `;
-
-            // Total update karna
-            document.getElementById('totalPrice').innerText = grandTotal.toFixed(2);
-
-            // Inputs clear karna
-            document.getElementById('foodName').value = "";
-            document.getElementById('foodPrice').value = "";
-            document.getElementById('foodQty').value = "1";
-            document.getElementById('foodName').focus();
-        }
+            // 2. Barcode Generation
+            var orderId = document.getElementById("order-text").innerText;
+            JsBarcode("#barcode", orderId, {
+                format: "CODE128",
+                width: 2,
+                height: 40,
+                displayValue: false
+            });
+        };
     </script>
 
 </body>
