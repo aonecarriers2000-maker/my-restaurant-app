@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3-Inch Thermal Bill Generator with Dynamic Items</title>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    
+    <title>3-Inch Thermal Bill Generator</title>
     <style>
         /* --- Screen Styling (Jo Computer/Phone par dikhega) --- */
         body {
@@ -48,6 +46,13 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
         
         .btn-container {
             text-align: center;
@@ -65,6 +70,7 @@
             background-color: #007bff;
             color: white;
             width: 100%;
+            margin-top: 5px;
         }
         .btn-add:hover { background-color: #0056b3; }
         .btn-print {
@@ -98,14 +104,6 @@
             text-align: right;
             font-weight: bold;
             font-size: 18px;
-        }
-        .barcode-container {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .barcode-container svg {
-            max-width: 100%;
-            height: auto;
         }
 
         /* --- PRINT STYLING (Jo Print button dabane par chalega) --- */
@@ -144,7 +142,7 @@
                 border-top: 1px solid #000;
                 padding-top: 5px;
             }
-            /* Inputs, Delete button, aur Print button ko chhupane ke liye */
+            /* Inputs, Form aur Buttons ko chhupane ke liye */
             .no-print, button, .btn-container, .item-form, .delete-col {
                 display: none !important;
             }
@@ -154,19 +152,36 @@
 <body>
 
     <div class="item-form no-print">
-        <h3 style="margin-top: 0;">Add Item to Bill</h3>
+        <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">Bill Details</h3>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Bill No:</label>
+                <input type="text" id="input-bill-no" value="1024" oninput="updateBillNo()">
+            </div>
+            <div class="form-group">
+                <label>Order / Token No:</label>
+                <input type="text" id="input-order-no" placeholder="e.g. 45" oninput="updateOrderNo()">
+            </div>
+        </div>
+
+        <h3 style="margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Add Items</h3>
         <div class="form-group">
             <label>Item Name:</label>
             <input type="text" id="item-name" placeholder="e.g. Samosa">
         </div>
-        <div class="form-group">
-            <label>Quantity:</label>
-            <input type="number" id="item-qty" value="1" min="1">
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Quantity:</label>
+                <input type="number" id="item-qty" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label>Rate / Price (₹):</label>
+                <input type="number" id="item-price" placeholder="0.00" step="0.01">
+            </div>
         </div>
-        <div class="form-group">
-            <label>Price per Item (₹):</label>
-            <input type="number" id="item-price" placeholder="0.00" step="0.01">
-        </div>
+        
         <button class="btn-add" onclick="addItem()">Add Item</button>
     </div>
 
@@ -180,10 +195,10 @@
         <hr style="border-top: 1px dashed #000;">
 
         <div style="font-size: 13px; margin-bottom: 10px;">
-            <p style="margin: 3px 0;"><b>Bill No:</b> <span id="bill-no">#1024</span></p>
-            <p style="margin: 3px 0;"><b>Date:</b> <span id="bill-date">--</span></p>
+            <p style="margin: 3px 0;"><b>Bill No:</b> #<span id="bill-no">1024</span></p>
+            <p style="margin: 3px 0;"><b>Order No:</b> <span id="order-no">--</span></p>
             <p style="margin: 3px 0;"><b>Table No:</b> <span id="table-number" style="font-weight: bold;">--</span></p>
-            <p style="margin: 3px 0;"><b>Order No:</b> <span id="order-text">ORD9876</span></p>
+            <p style="margin: 3px 0;"><b>Date:</b> <span id="bill-date">--</span></p>
         </div>
 
         <table id="bill-table">
@@ -191,7 +206,8 @@
                 <tr>
                     <th>Item</th>
                     <th class="text-right">Qty</th>
-                    <th class="text-right">Price</th>
+                    <th class="text-right">Rate</th>
+                    <th class="text-right">Total</th>
                     <th class="delete-col text-right">Action</th>
                 </tr>
             </thead>
@@ -204,12 +220,7 @@
         </div>
 
         <hr style="border-top: 1px dashed #000; margin-top: 15px;">
-        
-        <div class="barcode-container">
-            <svg id="barcode"></svg>
-        </div>
-
-        <p style="text-align: center; font-size: 12px; font-style: italic; margin-top: 10px;">Thank You! Visit Again.</p>
+        <p style="text-align: center; font-size: 12px; font-style: italic;">Thank You! Visit Again.</p>
     </div>
 
     <div class="btn-container no-print">
@@ -224,22 +235,23 @@
             var randomTable = Math.floor(Math.random() * 8) + 1;
             document.getElementById("table-number").innerText = randomTable;
 
-            // 2. Aaj ki Date Automatic dalne ke liye
+            // 2. Automatic Date
             var today = new Date();
             var dateStr = today.getDate() + '-' + (today.getMonth()+1) + '-' + today.getFullYear();
             document.getElementById("bill-date").innerText = dateStr;
-
-            // 3. Random Order Number & Barcode
-            var randomOrderNum = "ORD" + Math.floor(1000 + Math.random() * 9000);
-            document.getElementById("order-text").innerText = randomOrderNum;
-            
-            JsBarcode("#barcode", randomOrderNum, {
-                format: "CODE128",
-                width: 2,
-                height: 40,
-                displayValue: false
-            });
         };
+
+        // Live Bill Number Update karne ke liye
+        function updateBillNo() {
+            var val = document.getElementById("input-bill-no").value;
+            document.getElementById("bill-no").innerText = val ? val : "--";
+        }
+
+        // Live Order Number Update karne ke liye
+        function updateOrderNo() {
+            var val = document.getElementById("input-order-no").value;
+            document.getElementById("order-no").innerText = val ? val : "--";
+        }
 
         // Item ko table mein add karne ka function
         function addItem() {
@@ -248,7 +260,7 @@
             var price = parseFloat(document.getElementById("item-price").value);
 
             if(name === "" || isNaN(qty) || isNaN(price) || qty <= 0 || price <= 0) {
-                alert("Please enter valid Item Name, Quantity and Price!");
+                alert("Please enter valid Item Name, Quantity and Rate!");
                 return;
             }
 
@@ -261,6 +273,7 @@
             row.innerHTML = `
                 <td>${name}</td>
                 <td class="text-right">${qty}</td>
+                <td class="text-right">₹${price.toFixed(2)}</td>
                 <td class="text-right">₹${itemTotal.toFixed(2)}</td>
                 <td class="delete-col text-right"><button class="btn-delete" onclick="deleteItem(this, ${itemTotal})">Delete</button></td>
             `;
@@ -268,7 +281,7 @@
             tbody.appendChild(row);
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
 
-            // Inputs ko wapas khali karne ke liye
+            // Inputs ko clear karne ke liye
             document.getElementById("item-name").value = "";
             document.getElementById("item-qty").value = "1";
             document.getElementById("item-price").value = "";
