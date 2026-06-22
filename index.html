@@ -148,7 +148,7 @@
         <button class="btn-add" onclick="addItem()">Add Item</button>
     </div>
 
-    <div class="invoice-box" id="invoice-bill-area">
+    <div class="invoice-box" id="invoice-bill-area" style="background: #fff; padding: 10px;">
         <div style="text-align: center; margin-bottom: 12px;">
             <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold;">MY RETAIL SHOP</h2>
             <p style="margin: 2px 0; font-size: 12px;">Bhiwandi, Maharashtra, India</p>
@@ -182,12 +182,12 @@
         </div>
 
         <div style="border-top: 1px dashed #000; margin: 15px 0 8px 0;"></div>
-        <p style="text-align: center; font-size: 12px; font-style: italic; margin: 0;">Thank You! Visit Again.</p>
+        <p style="text-align: center; font-size: 12px; font-style: italic; margin: 0; padding-bottom: 5px;">Thank You! Visit Again.</p>
     </div>
 
     <div class="btn-container">
         <button class="btn-print-text" onclick="printViaText()">Option 1: Print via Text (Fast ESC/POS)</button>
-        <button class="btn-print-pdf" onclick="printViaPDF()">Option 2: Print via PDF (3-Inch Graphic)</button>
+        <button class="btn-print-pdf" onclick="printViaPDF()">Option 2: Print via PDF (3-Inch Tight Fit)</button>
     </div>
 
     <script>
@@ -240,7 +240,7 @@
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
         }
 
-        // ================= FIX METHOD 1: STANDARD RAWBT TEXT INTENT =================
+        // ================= METHOD 1: TEXT MODE =================
         function printViaText() {
             let tableRows = document.querySelectorAll("#bill-items tr");
             if(tableRows.length === 0) { alert("Please add items first!"); return; }
@@ -275,12 +275,11 @@
             text += "------------------------------------------------\n\n";
             text += "          Thank You! Visit Again.       \n\n\n\n";
 
-            // Safe Android intent formatting
             let url = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(text) + ";end;";
             window.location.href = url;
         }
 
-        // ================= FIX METHOD 2: GRAPHIC PDF VIA BASE64 INTENT =================
+        // ================= METHOD 2: FIX NO BLANK PAGE PDF =================
         function printViaPDF() {
             let tableRows = document.querySelectorAll("#bill-items tr");
             if(tableRows.length === 0) { alert("Please add items first!"); return; }
@@ -290,27 +289,34 @@
 
             const element = document.getElementById("invoice-bill-area");
 
-            html2canvas(element, { scale: 2 }).then(canvas => {
+            // html2canvas configuration with precise bounding box
+            html2canvas(element, { 
+                scale: 2,
+                backgroundColor: "#ffffff",
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
                 deleteButtons.forEach(btn => btn.style.display = "inline-block");
 
                 const imgData = canvas.toDataURL('image/jpeg', 1.0);
                 const { jsPDF } = window.jspdf;
 
-                const imgWidth = 76; 
+                // Standard 3-Inch Width (72mm printing zone)
+                const imgWidth = 72; 
+                // Calculate tight exact height to prevent blank tracking trailing paper
                 const pageHeight = (canvas.height * imgWidth) / canvas.width;
 
                 const doc = new jsPDF({
                     orientation: 'p',
                     unit: 'mm',
-                    format: [imgWidth, pageHeight + 5]
+                    format: [imgWidth, pageHeight] // Extracted padding overrides
                 });
 
+                // Margins sets to zero for tight wrap boundaries
                 doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, pageHeight);
                 
-                // base64 pdf string output bina window open kiye
                 let pdfBase64 = doc.output('datauristring').split(',')[1];
                 
-                // RawBT Intent for raw base64 PDF processing
                 let url = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64=" + encodeURIComponent(pdfBase64) + ";S.extension=pdf;end;";
                 window.location.href = url;
             });
