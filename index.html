@@ -6,6 +6,7 @@
     <title>3-Inch Thermal Bill & PDF Generator</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         /* --- Screen Styling --- */
@@ -16,9 +17,9 @@
             color: #333;
         }
         .invoice-box {
-            max-width: 400px;
+            max-width: 360px;
             margin: auto;
-            padding: 20px;
+            padding: 15px;
             background: #fff;
             border: 1px solid #eee;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
@@ -26,7 +27,7 @@
         
         /* Input Form Styling */
         .item-form {
-            max-width: 400px;
+            max-width: 360px;
             margin: 0 auto 20px auto;
             padding: 15px;
             background: #fff;
@@ -58,7 +59,7 @@
         }
         
         .btn-container {
-            max-width: 440px;
+            max-width: 390px;
             margin: 20px auto 0 auto;
             display: flex;
             flex-direction: column;
@@ -107,9 +108,10 @@
             margin-top: 15px;
         }
         th, td {
-            padding: 8px;
+            padding: 6px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px dashed #ddd;
+            font-size: 13px;
         }
         th { background-color: #f8f9fa; }
         .text-right { text-align: right; }
@@ -117,13 +119,7 @@
             margin-top: 15px;
             text-align: right;
             font-weight: bold;
-            font-size: 18px;
-        }
-
-        @media print {
-            body, .item-form, .btn-container {
-                display: none;
-            }
+            font-size: 16px;
         }
     </style>
 </head>
@@ -169,14 +165,14 @@
 
     <div class="invoice-box" id="invoice-bill-area">
         <div style="text-align: center; margin-bottom: 12px;">
-            <h2 style="margin: 0 0 4px 0; font-size: 22px; font-weight: bold;">MY RETAIL SHOP</h2>
-            <p style="margin: 2px 0; font-size: 13px;">Bhiwandi, Maharashtra, India</p>
-            <p style="margin: 2px 0; font-size: 13px;">Mob: +91 9876543210</p>
+            <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold;">MY RETAIL SHOP</h2>
+            <p style="margin: 2px 0; font-size: 12px;">Bhiwandi, Maharashtra, India</p>
+            <p style="margin: 2px 0; font-size: 12px;">Mob: +91 9876543210</p>
         </div>
         
         <div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
 
-        <div style="font-size: 14px; margin-bottom: 10px; line-height: 1.4;">
+        <div style="font-size: 12px; margin-bottom: 10px; line-height: 1.4;">
             <p style="margin: 2px 0;"><b>Bill No:</b> #<span id="bill-no">1024</span></p>
             <p style="margin: 2px 0;"><b>Order No:</b> <span id="order-no">--</span></p>
             <p style="margin: 2px 0;"><b>Table No:</b> <span id="table-number" style="font-weight: bold;">--</span></p>
@@ -190,7 +186,6 @@
                     <th class="text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Qty</th>
                     <th class="text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Rate</th>
                     <th class="text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Total</th>
-                    <th class="delete-col text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Action</th>
                 </tr>
             </thead>
             <tbody id="bill-items">
@@ -202,18 +197,17 @@
         </div>
 
         <div style="border-top: 1px dashed #000; margin: 15px 0 8px 0;"></div>
-        <p style="text-align: center; font-size: 13px; font-style: italic; margin: 0;">Thank You! Visit Again.</p>
+        <p style="text-align: center; font-size: 12px; font-style: italic; margin: 0;">Thank You! Visit Again.</p>
     </div>
 
     <div class="btn-container">
         <button class="btn-print-text" onclick="printViaText()">Option 1: Print via Text (Fast ESC/POS)</button>
-        <button class="btn-print-pdf" onclick="printViaPDF()">Option 2: Print via PDF (3-Inch Graphic)</button>
+        <button class="btn-print-pdf" onclick="printViaPDF()">Option 2: Print via PDF (3-Inch Graphical)</button>
     </div>
 
     <script>
         var totalAmount = 0;
 
-        // Auto initialization on load
         window.onload = function() {
             var randomTable = Math.floor(Math.random() * 8) + 1;
             document.getElementById("input-table-no").value = randomTable;
@@ -224,7 +218,6 @@
             document.getElementById("bill-date").innerText = dateStr;
         };
 
-        // UI Mirror binding functions
         function updateBillNo() { document.getElementById("bill-no").innerText = document.getElementById("input-bill-no").value || "--"; }
         function updateOrderNo() { document.getElementById("order-no").innerText = document.getElementById("input-order-no").value || "--"; }
         function updateTableNo() { document.getElementById("table-number").innerText = document.getElementById("input-table-no").value || "--"; }
@@ -236,7 +229,6 @@
             }
         }
 
-        // Add dynamic rows
         function addItem() {
             var name = document.getElementById("item-name").value;
             var qty = parseInt(document.getElementById("item-qty").value);
@@ -254,24 +246,21 @@
             var row = document.createElement("tr");
 
             row.innerHTML = `
-                <td>${name}</td>
+                <td>${name} <br><button class="btn-delete" style="padding:1px 5px; font-size:10px;" onclick="deleteItem(this, ${itemTotal})">Remove</button></td>
                 <td class="text-right">${qty}</td>
                 <td class="text-right">₹${price.toFixed(2)}</td>
                 <td class="text-right">₹${itemTotal.toFixed(2)}</td>
-                <td class="delete-col text-right"><button class="btn-delete" onclick="deleteItem(this, ${itemTotal})">Delete</button></td>
             `;
 
             tbody.appendChild(row);
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
 
-            // Clear item input nodes
             document.getElementById("item-name").value = "";
             document.getElementById("item-qty").value = "1";
             document.getElementById("item-price").value = "";
             document.getElementById("item-name").focus();
         }
 
-        // Delete explicit row
         function deleteItem(button, itemTotal) {
             var row = button.parentNode.parentNode;
             row.parentNode.removeChild(row);
@@ -303,7 +292,7 @@
             tableRows.forEach(row => {
                 let cols = row.querySelectorAll("td");
                 if(cols.length >= 4) {
-                    let name = cols[0].innerText;
+                    let name = cols[0].childNodes[0].textContent.trim();
                     let qty = cols[1].innerText;
                     let rate = cols[2].innerText.replace('₹', '');
                     let total = cols[3].innerText.replace('₹', '');
@@ -326,7 +315,7 @@
             window.location.href = intentUrl;
         }
 
-        // ================= METHOD 2: DIRECT 3-INCH PDF GENERATION =================
+        // ================= METHOD 2: 100% PERFECT 3-INCH PDF (IMAGE METHOD) =================
         function printViaPDF() {
             let tableRows = document.querySelectorAll("#bill-items tr");
             if(tableRows.length === 0) {
@@ -334,90 +323,35 @@
                 return;
             }
 
-            const { jsPDF } = window.jspdf;
-            
-            // 80mm width standard thermal footprint roll scaling metrics 
-            // Calculate height dynamically based on items array length to avoid whitespace trail
-            let dynamicHeight = 110 + (tableRows.length * 8); 
+            // Temporarily hide action buttons so they don't show up in the PDF
+            let deleteButtons = document.querySelectorAll(".btn-delete");
+            deleteButtons.forEach(btn => btn.style.display = "none");
 
-            const doc = new jsPDF({
-                orientation: 'p',
-                unit: 'mm',
-                format: [80, dynamicHeight]
+            const element = document.getElementById("invoice-bill-area");
+
+            // Convert HTML Div directly into a High-Quality Image first
+            html2canvas(element, { scale: 2 }).then(canvas => {
+                // Restore delete buttons on screen
+                deleteButtons.forEach(btn => btn.style.display = "inline-block");
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                const { jsPDF } = window.jspdf;
+
+                // 3-inch size alignment (approx 76mm width)
+                const imgWidth = 76; 
+                const pageHeight = (canvas.height * imgWidth) / canvas.width;
+
+                const doc = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: [imgWidth, pageHeight + 10]
+                });
+
+                doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, pageHeight);
+                
+                // Save and trigger Android default share/print view which safely sends heavy files to RawBT
+                doc.output('dataurlnewwindow');
             });
-
-            // Set monospace ticket font for perfect tracking alignment
-            doc.setFont("courier", "normal");
-
-            // Header Section
-            doc.setFontSize(14);
-            doc.setFont("courier", "bold");
-            doc.text("MY RETAIL SHOP", 40, 10, { align: 'center' });
-            
-            doc.setFontSize(9);
-            doc.setFont("courier", "normal");
-            doc.text("Bhiwandi, Maharashtra, India", 40, 15, { align: 'center' });
-            doc.text("Mob: +91 9876543210", 40, 19, { align: 'center' });
-            
-            doc.text("------------------------------------------", 4, 24);
-            
-            // Meta Info
-            doc.text("Bill No:  #" + document.getElementById("bill-no").innerText, 5, 29);
-            doc.text("Order No: " + document.getElementById("order-no").innerText, 5, 34);
-            doc.text("Table No: " + document.getElementById("table-number").innerText, 5, 39);
-            doc.text("Date:     " + document.getElementById("bill-date").innerText, 5, 44);
-            
-            doc.text("------------------------------------------", 4, 49);
-            
-            // Table Header 
-            doc.setFont("courier", "bold");
-            doc.text("Item Name        Qty   Rate       Total", 5, 54);
-            doc.text("------------------------------------------", 4, 58);
-            
-            // Print Rows
-            doc.setFont("courier", "normal");
-            let currentY = 63;
-            
-            tableRows.forEach(row => {
-                let cols = row.querySelectorAll("td");
-                if(cols.length >= 4) {
-                    let name = cols[0].innerText.substring(0, 15);
-                    let qty = cols[1].innerText;
-                    let rate = cols[2].innerText.replace('₹', '');
-                    let total = cols[3].innerText.replace('₹', '');
-
-                    // Alignment padding algorithm logic for 80mm PDF view
-                    let lineStr = name.padEnd(16, ' ') + 
-                                  qty.padStart(4, ' ') + 
-                                  rate.padStart(9, ' ') + 
-                                  total.padStart(12, ' ');
-                                  
-                    doc.text(lineStr, 5, currentY);
-                    currentY += 6;
-                }
-            });
-
-            // Total Block calculation
-            doc.text("------------------------------------------", 4, currentY);
-            currentY += 5;
-            doc.setFont("courier", "bold");
-            let totalVal = document.getElementById("grand-total").innerText;
-            doc.text("Grand Total: " + "INR " + totalVal, 5, currentY);
-            
-            // Footer Section
-            currentY += 6;
-            doc.text("------------------------------------------", 4, currentY);
-            currentY += 6;
-            doc.setFont("courier", "italic");
-            doc.text("Thank You! Visit Again.", 40, currentY, { align: 'center' });
-
-            // Generate explicit raw Base64 data bundle array
-            let rawPdfUri = doc.output('datauristring');
-            let base64Data = rawPdfUri.split(',')[1];
-
-            // Official RawBT Android PDF Payload Intent Engine trigger
-            let intentUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.pdf=" + encodeURIComponent(base64Data) + ";end;";
-            window.location.href = intentUrl;
         }
     </script>
 </body>
