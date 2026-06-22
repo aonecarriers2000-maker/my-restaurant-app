@@ -76,6 +76,10 @@
         .btn-print {
             background-color: #28a745;
             color: white;
+            width: 100%;
+            max-width: 400px;
+            padding: 12px;
+            font-size: 16px;
         }
         .btn-print:hover { background-color: #218838; }
         .btn-delete {
@@ -106,47 +110,10 @@
             font-size: 18px;
         }
 
-        /* --- PRINT STYLING (Jo Print button dabane par chalega) --- */
+        /* Screen clean rakhne ke liye default print media disabled */
         @media print {
-            @page {
-                size: 3in auto;
-                margin: 0; /* Web-margin zero karke custom internal space denge */
-            }
-            body {
-                width: 3in;
-                margin: 0;
-                padding: 0;
-                background-color: #fff;
-                color: #000;
-                font-size: 14px;
-                font-family: 'Courier New', Courier, monospace;
-            }
-            .invoice-box {
-                width: 3in !important;
-                max-width: 3in !important;
-                /* YAHAN CHANGES KIYE HAIN: Left aur Right mein padding jodh di hai */
-                padding: 5px 4mm 5px 4mm !important; 
-                margin: 0 !important;
-                border: none !important;
-                box-shadow: none !important;
-                box-sizing: border-box !important; /* Isse padding andar ki taraf dabeegi */
-            }
-            table {
-                width: 100% !important;
-                font-size: 13px;
-            }
-            th, td {
-                padding: 6px 2px !important;
-                border-bottom: 1px dashed #000 !important;
-            }
-            .total-section {
-                font-size: 16px !important;
-                border-top: 1px solid #000;
-                padding-top: 5px;
-            }
-            /* Inputs, Form aur Buttons ko chhupane ke liye */
-            .no-print, button, .btn-container, .item-form, .delete-col {
-                display: none !important;
+            body, .item-form, .invoice-box, .btn-container {
+                display: none;
             }
         }
     </style>
@@ -165,6 +132,10 @@
                 <label>Order / Token No:</label>
                 <input type="text" id="input-order-no" placeholder="e.g. 45" oninput="updateOrderNo()">
             </div>
+            <div class="form-group">
+                <label>Table No:</label>
+                <input type="text" id="input-table-no" placeholder="e.g. 5" oninput="updateTableNo()">
+            </div>
         </div>
 
         <h3 style="margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Add Items</h3>
@@ -176,11 +147,11 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Quantity:</label>
-                <input type="number" id="item-qty" value="1" min="1">
+                <input type="number" id="item-qty" value="1" min="1" onkeydown="checkEnter(event)">
             </div>
             <div class="form-group">
                 <label>Rate / Price (₹):</label>
-                <input type="number" id="item-price" placeholder="0.00" step="0.01">
+                <input type="number" id="item-price" placeholder="0.00" step="0.01" onkeydown="checkEnter(event)">
             </div>
         </div>
         
@@ -214,7 +185,7 @@
                 </tr>
             </thead>
             <tbody id="bill-items">
-                </tbody>
+            </tbody>
         </table>
 
         <div class="total-section">
@@ -226,7 +197,7 @@
     </div>
 
     <div class="btn-container no-print">
-        <button class="btn-print" onclick="window.print()">Print Bill</button>
+        <button class="btn-print" onclick="printViaRawBT()">Print Bill</button>
     </div>
 
     <script>
@@ -234,6 +205,7 @@
 
         window.onload = function() {
             var randomTable = Math.floor(Math.random() * 8) + 1;
+            document.getElementById("input-table-no").value = randomTable;
             document.getElementById("table-number").innerText = randomTable;
 
             var today = new Date();
@@ -249,6 +221,18 @@
         function updateOrderNo() {
             var val = document.getElementById("input-order-no").value;
             document.getElementById("order-no").innerText = val ? val : "--";
+        }
+
+        function updateTableNo() {
+            var val = document.getElementById("input-table-no").value;
+            document.getElementById("table-number").innerText = val ? val : "--";
+        }
+
+        function checkEnter(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                addItem();
+            }
         }
 
         function addItem() {
@@ -278,9 +262,11 @@
             tbody.appendChild(row);
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
 
+            // Auto Reset and Focus Back to Item Name
             document.getElementById("item-name").value = "";
             document.getElementById("item-qty").value = "1";
             document.getElementById("item-price").value = "";
+            document.getElementById("item-name").focus();
         }
 
         function deleteItem(button, itemTotal) {
@@ -288,6 +274,52 @@
             row.parentNode.removeChild(row);
             totalAmount -= itemTotal;
             document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
+        }
+
+        // --- RAWBT BLUETOOTH PRINTER HANDLER ---
+        function printViaRawBT() {
+            let tableRows = document.querySelectorAll("#bill-items tr");
+            if(tableRows.length === 0) {
+                alert("Please add at least one item to print!");
+                return;
+            }
+
+            // Text Alignment Layout Formatting
+            let shopName   = "         MY RETAIL SHOP\n"; 
+            let address    = "   Bhiwandi, Maharashtra, India\n";
+            let contact    = "        Mob: +91 9876543210\n";
+            let lineSep    = "--------------------------------\n"; 
+            
+            let billNo   = "Bill No:  #" + document.getElementById("bill-no").innerText + "\n";
+            let orderNo  = "Order No: " + document.getElementById("order-no").innerText + "\n";
+            let tableNo  = "Table No: " + document.getElementById("table-number").innerText + "\n";
+            let dateStr  = "Date:     " + document.getElementById("bill-date").innerText + "\n";
+            
+            let tableHeader = "Item Name\n  Qty   x   Rate        Total\n";
+            
+            let itemsText = "";
+            tableRows.forEach(row => {
+                let cols = row.querySelectorAll("td");
+                if(cols.length >= 4) {
+                    let name = cols[0].innerText;
+                    let qty = cols[1].innerText;
+                    let rate = cols[2].innerText.replace('₹', '');
+                    let total = cols[3].innerText.replace('₹', '');
+                    
+                    itemsText += `${name}\n  ${qty}   x   ${rate}       ${total}\n`;
+                }
+            });
+            
+            let grandTotal = "Grand Total:          INR " + document.getElementById("grand-total").innerText + "\n";
+            let footer = "\n    Thank You! Visit Again.\n\n\n\n"; 
+
+            // Final Compiled Data String
+            let rawData = shopName + address + contact + lineSep + billNo + orderNo + tableNo + dateStr + lineSep + tableHeader + lineSep + itemsText + lineSep + grandTotal + lineSep + footer;
+
+            // Triggering RawBT Android Intent
+            let rawbtUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(rawData) + ";end;";
+            
+            window.location.href = rawbtUrl;
         }
     </script>
 
