@@ -3,42 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3-Inch Thermal Bill & PDF Generator</title>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
+    <title>Hotel Receipt Generator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .invoice-box {
-            max-width: 360px;
-            margin: auto;
-            padding: 15px;
-            background: #fff;
-            border: 1px solid #eee;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-        }
-        .item-form {
-            max-width: 360px;
-            margin: 0 auto 20px auto;
-            padding: 15px;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+
+        /* Input Form Styling */
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 500px;
         }
         .form-group {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 5px;
             font-weight: bold;
-            font-size: 14px;
+            margin-bottom: 5px;
         }
         .form-group input {
             width: 100%;
@@ -47,279 +40,350 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        .form-row {
+        
+        /* Item Adder Row */
+        .item-row {
             display: flex;
             gap: 10px;
+            margin-bottom: 8px;
         }
-        .form-row .form-group {
-            flex: 1;
+        .item-row input {
+            padding: 6px;
         }
-        .btn-container {
-            max-width: 390px;
-            margin: 20px auto 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+
         button {
-            padding: 12px;
-            font-size: 15px;
+            padding: 10px;
             border: none;
+            border-radius: 4px;
+            font-size: 14px;
             cursor: pointer;
-            border-radius: 5px;
             font-weight: bold;
         }
-        .btn-add {
-            background-color: #007bff;
-            color: white;
-            width: 100%;
-            margin-top: 5px;
+        .btn-success { background-color: #28a745; color: white; width: 100%; font-size: 16px; margin-top: 10px; }
+        .btn-success:hover { background-color: #218838; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0069d9; }
+        .btn-danger { background-color: #dc3545; color: white; padding: 6px 10px; }
+
+        /* --- Thermal Receipt Styling --- */
+        #receipt-wrapper {
+            background: white;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .btn-print-text {
-            background-color: #28a745;
-            color: white;
-        }
-        .btn-print-pdf {
-            background-color: #ff9800;
-            color: white;
-        }
-        .btn-delete {
-            background-color: #dc3545;
-            color: white;
-            padding: 3px 8px;
+
+        .receipt {
+            width: 76mm;
+            font-family: 'Courier New', Courier, monospace;
             font-size: 12px;
-            border-radius: 3px;
+            color: #000;
+            line-height: 1.2;
+            padding: 5px;
         }
-        table {
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .dashed-line {
+            border-top: 1px dashed #000;
+            margin: 5px 0;
+        }
+
+        .hotel-title {
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .flex-justify {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .item-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
         }
-        th, td {
-            padding: 6px;
+        .item-table th, .item-table td {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
             text-align: left;
-            border-bottom: 1px dashed #ddd;
-            font-size: 13px;
+            padding: 2px 0;
         }
-        th { background-color: #f8f9fa; }
-        .text-right { text-align: right; }
-        .total-section {
-            margin-top: 15px;
+        .item-table .num-col {
             text-align: right;
+        }
+
+        .grand-total {
+            font-size: 18px;
             font-weight: bold;
-            font-size: 16px;
+        }
+
+        /* Print Override */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receipt-wrapper, #receipt-wrapper * {
+                visibility: visible;
+            }
+            #receipt-wrapper {
+                position: absolute;
+                left: 0;
+                top: 0;
+                box-shadow: none;
+                padding: 0;
+            }
+            .form-container, button {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="item-form">
-        <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">Bill Details</h3>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Bill No:</label>
-                <input type="text" id="input-bill-no" value="1024" oninput="updateBillNo()">
+    <!-- Input Form -->
+    <div class="form-container">
+        <h3 style="margin-top:0;">Receipt Data Entry</h3>
+        
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>Bill No (Starting):</label>
+                <input type="number" id="input-bill" value="21644">
             </div>
-            <div class="form-group">
-                <label>Order / Token:</label>
-                <input type="text" id="input-order-no" placeholder="--" oninput="updateOrderNo()">
+            <div class="form-group" style="flex: 1;">
+                <label>Select Date:</label>
+                <input type="date" id="input-date">
             </div>
-            <div class="form-group">
-                <label>Table No:</label>
-                <input type="text" id="input-table-no" placeholder="2" oninput="updateTableNo()">
+            <div class="form-group" style="flex: 1;">
+                <label>Waiter No:</label>
+                <input type="text" id="input-waiter" value="1">
             </div>
         </div>
 
-        <h3 style="margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Add Items</h3>
-        <div class="form-group">
-            <label>Item Name:</label>
-            <input type="text" id="item-name" placeholder="e.g. Biryani">
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Quantity:</label>
-                <input type="number" id="item-qty" value="1" min="1">
+        <hr>
+        <label style="font-weight: bold; display:block; margin-bottom: 8px;">Items List:</label>
+        <div id="items-input-container">
+            <!-- Default Rows -->
+            <div class="item-row">
+                <input type="text" placeholder="Item Name" class="prod-name" value="POROTTA" style="flex: 2;">
+                <input type="number" placeholder="Qty" class="prod-qty" value="2" style="flex: 0.8;">
+                <input type="number" placeholder="Price" class="prod-price" value="15" style="flex: 1;">
+                <button class="btn-danger" onclick="removeItem(this)">X</button>
             </div>
-            <div class="form-group">
-                <label>Rate (₹):</label>
-                <input type="number" id="item-price" placeholder="0.00" step="0.01">
+            <div class="item-row">
+                <input type="text" placeholder="Item Name" class="prod-name" value="GREEN PEAS MASA" style="flex: 2;">
+                <input type="number" placeholder="Qty" class="prod-qty" value="1" style="flex: 0.8;">
+                <input type="number" placeholder="Price" class="prod-price" value="40" style="flex: 1;">
+                <button class="btn-danger" onclick="removeItem(this)">X</button>
             </div>
-        </div>
-        <button class="btn-add" onclick="addItem()">Add Item</button>
-    </div>
-
-    <div class="invoice-box" id="invoice-bill-area" style="background: #fff; padding: 10px;">
-        <div style="text-align: center; margin-bottom: 12px;">
-            <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold;">MY RETAIL SHOP</h2>
-            <p style="margin: 2px 0; font-size: 12px;">Bhiwandi, Maharashtra, India</p>
-            <p style="margin: 2px 0; font-size: 12px;">Mob: +91 9876543210</p>
         </div>
         
-        <div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
-
-        <div style="font-size: 12px; margin-bottom: 10px; line-height: 1.4;">
-            <p style="margin: 2px 0;"><b>Bill No:</b> #<span id="bill-no">1024</span></p>
-            <p style="margin: 2px 0;"><b>Order No:</b> <span id="order-no">--</span></p>
-            <p style="margin: 2px 0;"><b>Table No:</b> <span id="table-number">2</span></p>
-            <p style="margin: 2px 0;"><b>Date:</b> <span id="bill-date">--</span></p>
-        </div>
-
-        <table id="bill-table">
-            <thead>
-                <tr>
-                    <th style="font-weight: bold; border-bottom: 1px dashed #000;">Item</th>
-                    <th class="text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Qty</th>
-                    <th class="text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Rate</th>
-                    <th class="text-right" style="font-weight: bold; border-bottom: 1px dashed #000;">Total</th>
-                </tr>
-            </thead>
-            <tbody id="bill-items">
-            </tbody>
-        </table>
-
-        <div class="total-section" style="margin-top: 15px; border-top: 1px dashed #000; padding-top: 8px;">
-            <span>Grand Total: ₹<span id="grand-total">0.00</span></span>
-        </div>
-
-        <div style="border-top: 1px dashed #000; margin: 15px 0 8px 0;"></div>
-        <p style="text-align: center; font-size: 12px; font-style: italic; margin: 0; padding-bottom: 5px;">Thank You! Visit Again.</p>
+        <button class="btn-primary" type="button" onclick="addItemRow()">+ Add More Item</button>
+        <button class="btn-success" onclick="generateReceipt()">Update & Print</button>
     </div>
 
-    <div class="btn-container">
-        <button class="btn-print-text" onclick="printViaText()">Option 1: Print via Text (Fast ESC/POS)</button>
-        <button class="btn-print-pdf" onclick="printViaPDF()">Option 2: Print via PDF (3-Inch Tight Fit)</button>
+    <!-- Receipt Preview Container -->
+    <div id="receipt-wrapper">
+        <div class="receipt">
+            
+            <!-- Header -->
+            <div class="text-center">
+                <span class="hotel-title">HOTEL GALAXY</span><br>
+                VAZHAKALA<br>
+                PH:-0484 2424162 , 0484 4069106<br>
+                GSTIN:-32AAIFH5810M1ZD
+            </div>
+
+            <div class="dashed-line"></div>
+
+            <!-- Bill Info -->
+            <div class="flex-justify">
+                <div>
+                    BILL NO: <span id="lbl-bill">21644</span><br>
+                    WAITER <span id="lbl-waiter">1</span><br>
+                    NAME:
+                </div>
+                <div class="text-right">
+                    DATE: <span id="lbl-date">07/06/26</span>
+                </div>
+            </div>
+
+            <div class="dashed-line"></div>
+
+            <!-- Items Table -->
+            <table class="item-table">
+                <thead>
+                    <tr>
+                        <th style="width: 45%;">ITEM NAME</th>
+                        <th class="num-col" style="width: 15%;">QTY</th>
+                        <th class="num-col" style="width: 20%;">PRICE</th>
+                        <th class="num-col" style="width: 20%;">AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody id="receipt-items-body">
+                    <!-- Dynamic Items Will Inject Here -->
+                </tbody>
+            </table>
+
+            <div class="dashed-line"></div>
+
+            <!-- Summary -->
+            <div class="flex-justify">
+                <span id="lbl-total-items-qty">TOTAL ITEM(S) :3  /QTY:4.000</span>
+                <span class="text-right" id="lbl-subtotal">85.00</span>
+            </div>
+
+            <div class="dashed-line"></div>
+
+            <!-- Tax Breakdown -->
+            <table class="item-table" style="font-size: 11px;">
+                <thead>
+                    <tr>
+                        <th>TAX %</th>
+                        <th class="num-col">TAXABLE VAL</th>
+                        <th class="num-col">CGST<br>(2.50%)</th>
+                        <th class="num-col">SGST<br>(2.50%)</th>
+                        <th class="num-col">TOTAL AMT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>5.00%</td>
+                        <td class="num-col" id="lbl-tax-base">85.00</td>
+                        <td class="num-col" id="lbl-cgst">2.12</td>
+                        <td class="num-col" id="lbl-sgst">2.12</td>
+                        <td class="num-col" id="lbl-tax-total">89.25</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="dashed-line"></div>
+
+            <!-- Final Total -->
+            <div class="flex-justify" style="align-items: center; margin: 5px 0;">
+                <span class="grand-total" style="font-size: 20px;">TOTAL</span>
+                <span class="grand-total" style="font-size: 22px;" id="lbl-grand-total">₹89.00</span>
+            </div>
+
+            <div class="dashed-line"></div>
+            <div>TOTAL ROUNDOFF @ <span id="lbl-roundoff">1.00</span></div>
+            <div class="dashed-line"></div>
+
+            <!-- Footer -->
+            <div class="text-center" style="margin-top: 10px;">
+                THANK YOU<br>
+                VISIT AGAIN
+            </div>
+
+        </div>
     </div>
 
     <script>
-        var totalAmount = 0;
-
+        // Set Current Date on Load
         window.onload = function() {
-            var today = new Date();
-            var dateStr = today.getDate() + '-' + (today.getMonth()+1) + '-' + today.getFullYear();
-            document.getElementById("bill-date").innerText = dateStr;
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            let mm = today.getMonth() + 1; 
+            let dd = today.getDate();
+
+            if (dd < 10) dd = '0' + dd;
+            if (mm < 10) mm = '0' + mm;
+
+            document.getElementById('input-date').value = yyyy + '-' + mm + '-' + dd;
+            calculateAndRender(); // Load initial calculation
         };
 
-        function updateBillNo() { document.getElementById("bill-no").innerText = document.getElementById("input-bill-no").value || "--"; }
-        function updateOrderNo() { document.getElementById("order-no").innerText = document.getElementById("input-order-no").value || "--"; }
-        function updateTableNo() { document.getElementById("table-number").innerText = document.getElementById("input-table-no").value || "--"; }
+        // Add Dynamic Item Inputs Row
+        function addItemRow() {
+            const container = document.getElementById('items-input-container');
+            const div = document.createElement('div');
+            div.className = 'item-row';
+            div.innerHTML = `
+                <input type="text" placeholder="Item Name" class="prod-name" style="flex: 2;">
+                <input type="number" placeholder="Qty" class="prod-qty" value="1" style="flex: 0.8;">
+                <input type="number" placeholder="Price" class="prod-price" value="0" style="flex: 1;">
+                <button class="btn-danger" onclick="removeItem(this)">X</button>
+            `;
+            container.appendChild(div);
+        }
 
-        function addItem() {
-            var name = document.getElementById("item-name").value;
-            var qty = parseInt(document.getElementById("item-qty").value);
-            var price = parseFloat(document.getElementById("item-price").value);
+        // Remove Item Row
+        function removeItem(button) {
+            button.parentElement.remove();
+        }
 
-            if(name === "" || isNaN(qty) || isNaN(price)) {
-                alert("Please fill details");
-                return;
+        // Core calculation logic
+        function calculateAndRender() {
+            const names = document.getElementsByClassName('prod-name');
+            const qtys = document.getElementsByClassName('prod-qty');
+            const prices = document.getElementsByClassName('prod-price');
+            
+            let tableBodyHtml = '<div class="dashed-line"></div>';
+            let totalItemsCount = names.length;
+            let totalQtySum = 0;
+            let subtotal = 0;
+
+            for(let i=0; i < names.length; i++) {
+                let name = names[i].value.toUpperCase() || "ITEM";
+                let qty = parseFloat(qtys[i].value) || 0;
+                let price = parseFloat(prices[i].value) || 0;
+                let amount = qty * price;
+
+                totalQtySum += qty;
+                subtotal += amount;
+
+                tableBodyHtml += `
+                    <tr>
+                        <td>${name}</td>
+                        <td class="num-col">${qty}Pk</td>
+                        <td class="num-col">${price.toFixed(2)}</td>
+                        <td class="num-col">${amount.toFixed(2)}</td>
+                    </tr>
+                `;
             }
 
-            var itemTotal = qty * price;
-            totalAmount += itemTotal;
+            // Calculations
+            let cgst = subtotal * 0.025;
+            let sgst = subtotal * 0.025;
+            let taxTotal = subtotal + cgst + sgst;
+            let grandTotalRounded = Math.round(taxTotal);
+            let roundoff = (grandTotalRounded - taxTotal).toFixed(2);
 
-            var tbody = document.getElementById("bill-items");
-            var row = document.createElement("tr");
-
-            row.innerHTML = `
-                <td>${name} <br><button class="btn-delete" style="padding:1px 5px; font-size:10px;" onclick="deleteItem(this, ${itemTotal})">Remove</button></td>
-                <td class="text-right">${qty}</td>
-                <td class="text-right">₹${price.toFixed(2)}</td>
-                <td class="text-right">₹${itemTotal.toFixed(2)}</td>
-            `;
-
-            tbody.appendChild(row);
-            document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
-
-            document.getElementById("item-name").value = "";
-            document.getElementById("item-price").value = "";
+            // Render on receipt
+            document.getElementById('receipt-items-body').innerHTML = tableBodyHtml;
+            document.getElementById('lbl-total-items-qty').innerText = `TOTAL ITEM(S) :${totalItemsCount}  /QTY:${totalQtySum.toFixed(3)}`;
+            document.getElementById('lbl-subtotal').innerText = subtotal.toFixed(2);
+            
+            document.getElementById('lbl-tax-base').innerText = subtotal.toFixed(2);
+            document.getElementById('lbl-cgst').innerText = cgst.toFixed(2);
+            document.getElementById('lbl-sgst').innerText = sgst.toFixed(2);
+            document.getElementById('lbl-tax-total').innerText = taxTotal.toFixed(2);
+            
+            document.getElementById('lbl-grand-total').innerText = `₹${grandTotalRounded.toFixed(2)}`;
+            document.getElementById('lbl-roundoff').innerText = Math.abs(roundoff);
         }
 
-        function deleteItem(button, itemTotal) {
-            var row = button.parentNode.parentNode;
-            row.parentNode.removeChild(row);
-            totalAmount -= itemTotal;
-            document.getElementById("grand-total").innerText = totalAmount.toFixed(2);
-        }
+        function generateReceipt() {
+            // First calculate latest changes
+            calculateAndRender();
 
-        // ================= METHOD 1: TEXT MODE =================
-        function printViaText() {
-            let tableRows = document.querySelectorAll("#bill-items tr");
-            if(tableRows.length === 0) { alert("Please add items first!"); return; }
+            // Metadata updates
+            let currentBillNo = parseInt(document.getElementById('input-bill').value);
+            document.getElementById('lbl-bill').innerText = currentBillNo;
 
-            let text = "";
-            text += "         MY RETAIL SHOP          \n";
-            text += "   Bhiwandi, Maharashtra, India  \n";
-            text += "        Mob: +91 9876543210      \n";
-            text += "------------------------------------------------\n";
-            text += "Bill No:  #" + document.getElementById("bill-no").innerText + "\n";
-            text += "Order No: " + document.getElementById("order-no").innerText + "\n";
-            text += "Table No: " + document.getElementById("table-number").innerText + "\n";
-            text += "Date:     " + document.getElementById("bill-date").innerText + "\n";
-            text += "------------------------------------------------\n";
-            text += "Item Name          Qty    Rate          Total   \n";
-            text += "------------------------------------------------\n";
+            const dateInput = document.getElementById('input-date').value;
+            if(dateInput) {
+                const parts = dateInput.split('-');
+                document.getElementById('lbl-date').innerText = parts[2] + '/' + parts[1] + '/' + parts[0].substring(2);
+            }
 
-            tableRows.forEach(row => {
-                let cols = row.querySelectorAll("td");
-                if(cols.length >= 4) {
-                    let name = cols[0].childNodes[0].textContent.trim();
-                    let qty = cols[1].innerText;
-                    let rate = cols[2].innerText.replace('₹', '');
-                    let total = cols[3].innerText.replace('₹', '');
-                    text += name.substring(0, 18).padEnd(19, ' ') + qty.padStart(4, ' ') + rate.padStart(11, ' ') + total.padStart(14, ' ') + "\n";
-                }
-            });
+            document.getElementById('lbl-waiter').innerText = document.getElementById('input-waiter').value;
+            
+            // Print Trigger
+            window.print();
 
-            text += "------------------------------------------------\n";
-            let totalVal = document.getElementById("grand-total").innerText;
-            text += "Grand Total:".padEnd(30, ' ') + ("INR " + totalVal).padStart(18, ' ') + "\n";
-            text += "------------------------------------------------\n\n";
-            text += "          Thank You! Visit Again.       \n\n\n\n";
-
-            let url = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(text) + ";end;";
-            window.location.href = url;
-        }
-
-        // ================= METHOD 2: FIX NO BLANK PAGE PDF =================
-        function printViaPDF() {
-            let tableRows = document.querySelectorAll("#bill-items tr");
-            if(tableRows.length === 0) { alert("Please add items first!"); return; }
-
-            let deleteButtons = document.querySelectorAll(".btn-delete");
-            deleteButtons.forEach(btn => btn.style.display = "none");
-
-            const element = document.getElementById("invoice-bill-area");
-
-            // html2canvas configuration with precise bounding box
-            html2canvas(element, { 
-                scale: 2,
-                backgroundColor: "#ffffff",
-                logging: false,
-                useCORS: true
-            }).then(canvas => {
-                deleteButtons.forEach(btn => btn.style.display = "inline-block");
-
-                const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                const { jsPDF } = window.jspdf;
-
-                // Standard 3-Inch Width (72mm printing zone)
-                const imgWidth = 72; 
-                // Calculate tight exact height to prevent blank tracking trailing paper
-                const pageHeight = (canvas.height * imgWidth) / canvas.width;
-
-                const doc = new jsPDF({
-                    orientation: 'p',
-                    unit: 'mm',
-                    format: [imgWidth, pageHeight] // Extracted padding overrides
-                });
-
-                // Margins sets to zero for tight wrap boundaries
-                doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, pageHeight);
-                
-                let pdfBase64 = doc.output('datauristring').split(',')[1];
-                
-                let url = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64=" + encodeURIComponent(pdfBase64) + ";S.extension=pdf;end;";
-                window.location.href = url;
-            });
+            // Auto-increment Bill No for next turn
+            document.getElementById('input-bill').value = currentBillNo + 1;
         }
     </script>
 </body>
