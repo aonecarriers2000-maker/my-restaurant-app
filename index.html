@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotel Receipt Generator</title>
+    <title>Ambiswamy's Receipt Generator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,7 +41,7 @@
             border-radius: 4px;
         }
         
-        /* Item Adder Row */
+        /* Item Input Row */
         .item-row {
             display: flex;
             gap: 10px;
@@ -65,33 +65,39 @@
         .btn-primary:hover { background-color: #0069d9; }
         .btn-danger { background-color: #dc3545; color: white; padding: 6px 10px; }
 
-        /* --- Thermal Receipt Styling --- */
+        /* --- Thermal Receipt Styling (Matching image 1000296885.jpg) --- */
         #receipt-wrapper {
             background: white;
-            padding: 10px;
+            padding: 15px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
         .receipt {
-            width: 76mm;
+            width: 76mm; /* Standard Thermal Paper Width */
             font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
+            font-size: 13px;
             color: #000;
-            line-height: 1.2;
+            line-height: 1.3;
             padding: 5px;
         }
 
         .text-center { text-align: center; }
         .text-right { text-align: right; }
-        .dashed-line {
-            border-top: 1px dashed #000;
+        
+        /* Double line style from new bill */
+        .double-line {
+            border-top: 3px double #000;
+            margin: 5px 0;
+        }
+        .single-line {
+            border-top: 1px solid #000;
             margin: 5px 0;
         }
 
         .hotel-title {
             font-size: 16px;
             font-weight: bold;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         .flex-justify {
@@ -105,9 +111,9 @@
         }
         .item-table th, .item-table td {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
+            font-size: 13px;
             text-align: left;
-            padding: 2px 0;
+            padding: 3px 0;
         }
         .item-table .num-col {
             text-align: right;
@@ -141,39 +147,31 @@
 </head>
 <body>
 
-    <!-- Input Form -->
     <div class="form-container">
-        <h3 style="margin-top:0;">Receipt Data Entry</h3>
+        <h3 style="margin-top:0;">Ambiswamy's Receipt Data Entry</h3>
         
         <div style="display: flex; gap: 10px;">
             <div class="form-group" style="flex: 1;">
                 <label>Bill No (Starting):</label>
-                <input type="number" id="input-bill" value="21644">
+                <input type="number" id="input-bill" value="905745">
             </div>
             <div class="form-group" style="flex: 1;">
                 <label>Select Date:</label>
                 <input type="date" id="input-date">
             </div>
             <div class="form-group" style="flex: 1;">
-                <label>Waiter No:</label>
-                <input type="text" id="input-waiter" value="1">
+                <label>Counter:</label>
+                <input type="text" id="input-counter" value="1">
             </div>
         </div>
 
         <hr>
         <label style="font-weight: bold; display:block; margin-bottom: 8px;">Items List:</label>
         <div id="items-input-container">
-            <!-- Default Rows -->
             <div class="item-row">
-                <input type="text" placeholder="Item Name" class="prod-name" value="POROTTA" style="flex: 2;">
-                <input type="number" placeholder="Qty" class="prod-qty" value="2" style="flex: 0.8;">
-                <input type="number" placeholder="Price" class="prod-price" value="15" style="flex: 1;">
-                <button class="btn-danger" onclick="removeItem(this)">X</button>
-            </div>
-            <div class="item-row">
-                <input type="text" placeholder="Item Name" class="prod-name" value="GREEN PEAS MASA" style="flex: 2;">
+                <input type="text" placeholder="Item Name" class="prod-name" value="Tea" style="flex: 2;">
                 <input type="number" placeholder="Qty" class="prod-qty" value="1" style="flex: 0.8;">
-                <input type="number" placeholder="Price" class="prod-price" value="40" style="flex: 1;">
+                <input type="number" placeholder="Price" class="prod-price" value="22" style="flex: 1;">
                 <button class="btn-danger" onclick="removeItem(this)">X</button>
             </div>
         </div>
@@ -182,97 +180,99 @@
         <button class="btn-success" onclick="generateReceipt()">Update & Print</button>
     </div>
 
-    <!-- Receipt Preview Container -->
     <div id="receipt-wrapper">
         <div class="receipt">
             
-            <!-- Header -->
-            <div class="text-center">
-                <span class="hotel-title">HOTEL GALAXY</span><br>
-                VAZHAKALA<br>
-                PH:-0484 2424162 , 0484 4069106<br>
-                GSTIN:-32AAIFH5810M1ZD
+            <div class="text-center" style="font-size: 12px; margin-bottom: 10px;">
+                Thank you ! Visit again !<br>
+                Please collect your bill !
             </div>
 
-            <div class="dashed-line"></div>
+            <div class="text-center">
+                <span class="hotel-title">AMBISWAMY'S VEG<br>RESTAURANT</span><br>
+                MG.ROAD, PALLIMUKKU<br>
+                ERNAKULAM, KERALA<br>
+                Ph:9072737003<br>
+                GSTIN:32ACEPV2352A1Z4<br>
+                FSSAI Lic No. 11316007001812
+            </div>
 
-            <!-- Bill Info -->
+            <div class="double-line"></div>
+
             <div class="flex-justify">
                 <div>
-                    BILL NO: <span id="lbl-bill">21644</span><br>
-                    WAITER <span id="lbl-waiter">1</span><br>
-                    NAME:
+                    Date: <span id="lbl-date">26/05/26</span><br>
+                    Cashier: RAPC02
                 </div>
-                <div class="text-right">
-                    DATE: <span id="lbl-date">07/06/26</span>
+                <div>
+                    Counter: <span id="lbl-counter">1</span><br>
+                    Bill No.: <span id="lbl-bill">905745</span>
                 </div>
             </div>
 
-            <div class="dashed-line"></div>
+            <div class="single-line"></div>
+            
+            <div style="font-weight: bold; margin-bottom: 2px;">Dine-in</div>
 
-            <!-- Items Table -->
             <table class="item-table">
                 <thead>
                     <tr>
-                        <th style="width: 45%;">ITEM NAME</th>
-                        <th class="num-col" style="width: 15%;">QTY</th>
-                        <th class="num-col" style="width: 20%;">PRICE</th>
-                        <th class="num-col" style="width: 20%;">AMOUNT</th>
+                        <th style="width: 10%;">No.</th>
+                        <th style="width: 40%;">Item</th>
+                        <th class="num-col" style="width: 15%;">Qty.</th>
+                        <th class="num-col" style="width: 15%;">Price</th>
+                        <th class="num-col" style="width: 20%;">Amount</th>
                     </tr>
                 </thead>
                 <tbody id="receipt-items-body">
-                    <!-- Dynamic Items Will Inject Here -->
-                </tbody>
+                    </tbody>
             </table>
 
-            <div class="dashed-line"></div>
+            <div class="single-line"></div>
 
-            <!-- Summary -->
+            <div class="flex-justify" style="font-weight: bold;">
+                <span>Sub Total:</span>
+                <span id="lbl-subtotal">22.00</span>
+            </div>
+
+            <div class="single-line"></div>
+
             <div class="flex-justify">
-                <span id="lbl-total-items-qty">TOTAL ITEM(S) :3  /QTY:4.000</span>
-                <span class="text-right" id="lbl-subtotal">85.00</span>
+                <div>
+                    Total Qty: <span id="lbl-total-qty">1</span>
+                </div>
+                <div style="width: 60%;">
+                    <div class="flex-justify">
+                        <span>Sub Total</span>
+                        <span id="lbl-tax-base">20.95</span>
+                    </div>
+                    <div class="flex-justify">
+                        <span>CGST 2.5%</span>
+                        <span id="lbl-cgst">0.52</span>
+                    </div>
+                    <div class="flex-justify">
+                        <span>SGST 2.5%</span>
+                        <span id="lbl-sgst">0.52</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="dashed-line"></div>
+            <div class="single-line"></div>
 
-            <!-- Tax Breakdown -->
-            <table class="item-table" style="font-size: 11px;">
-                <thead>
-                    <tr>
-                        <th>TAX %</th>
-                        <th class="num-col">TAXABLE VAL</th>
-                        <th class="num-col">CGST<br>(2.50%)</th>
-                        <th class="num-col">SGST<br>(2.50%)</th>
-                        <th class="num-col">TOTAL AMT</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>5.00%</td>
-                        <td class="num-col" id="lbl-tax-base">85.00</td>
-                        <td class="num-col" id="lbl-cgst">2.12</td>
-                        <td class="num-col" id="lbl-sgst">2.12</td>
-                        <td class="num-col" id="lbl-tax-total">89.25</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="dashed-line"></div>
-
-            <!-- Final Total -->
-            <div class="flex-justify" style="align-items: center; margin: 5px 0;">
-                <span class="grand-total" style="font-size: 20px;">TOTAL</span>
-                <span class="grand-total" style="font-size: 22px;" id="lbl-grand-total">₹89.00</span>
+            <div class="flex-justify" style="align-items: flex-end;">
+                <div style="font-size: 11px;">Round off</div>
+                <div class="text-right" id="lbl-roundoff" style="font-size: 11px;">+0.01</div>
+            </div>
+            
+            <div class="flex-justify" style="align-items: center; margin-top: 2px;">
+                <span class="grand-total" style="font-size: 18px;">Grand Total</span>
+                <span class="grand-total" style="font-size: 18px;" id="lbl-grand-total">₹22.00</span>
             </div>
 
-            <div class="dashed-line"></div>
-            <div>TOTAL ROUNDOFF @ <span id="lbl-roundoff">1.00</span></div>
-            <div class="dashed-line"></div>
+            <div class="double-line"></div>
 
-            <!-- Footer -->
-            <div class="text-center" style="margin-top: 10px;">
-                THANK YOU<br>
-                VISIT AGAIN
+            <div class="text-center" style="font-size: 11px; font-weight: bold; margin-top: 5px;">
+                Best before 1 1/2 hours after delivery.
             </div>
 
         </div>
@@ -290,10 +290,9 @@
             if (mm < 10) mm = '0' + mm;
 
             document.getElementById('input-date').value = yyyy + '-' + mm + '-' + dd;
-            calculateAndRender(); // Load initial calculation
+            calculateAndRender(); 
         };
 
-        // Add Dynamic Item Inputs Row
         function addItemRow() {
             const container = document.getElementById('items-input-container');
             const div = document.createElement('div');
@@ -307,24 +306,21 @@
             container.appendChild(div);
         }
 
-        // Remove Item Row
         function removeItem(button) {
             button.parentElement.remove();
         }
 
-        // Core calculation logic
         function calculateAndRender() {
             const names = document.getElementsByClassName('prod-name');
             const qtys = document.getElementsByClassName('prod-qty');
             const prices = document.getElementsByClassName('prod-price');
             
-            let tableBodyHtml = '<div class="dashed-line"></div>';
-            let totalItemsCount = names.length;
+            let tableBodyHtml = '';
             let totalQtySum = 0;
             let subtotal = 0;
 
             for(let i=0; i < names.length; i++) {
-                let name = names[i].value.toUpperCase() || "ITEM";
+                let name = names[i].value || "Item";
                 let qty = parseFloat(qtys[i].value) || 0;
                 let price = parseFloat(prices[i].value) || 0;
                 let amount = qty * price;
@@ -334,37 +330,37 @@
 
                 tableBodyHtml += `
                     <tr>
+                        <td>${i + 1}</td>
                         <td>${name}</td>
-                        <td class="num-col">${qty}Pk</td>
-                        <td class="num-col">${price.toFixed(2)}</td>
+                        <td class="num-col">${qty}</td>
+                        <td class="num-col">${price.toFixed(0)}</td>
                         <td class="num-col">${amount.toFixed(2)}</td>
                     </tr>
                 `;
             }
 
-            // Calculations
-            let cgst = subtotal * 0.025;
-            let sgst = subtotal * 0.025;
-            let taxTotal = subtotal + cgst + sgst;
-            let grandTotalRounded = Math.round(taxTotal);
-            let roundoff = (grandTotalRounded - taxTotal).toFixed(2);
+            // Calculations backwards to match reverse GST inclusive receipt logic
+            let taxBase = subtotal / 1.05; 
+            let cgst = taxBase * 0.025;
+            let sgst = taxBase * 0.025;
+            let grandTotalRounded = Math.round(subtotal);
+            let roundoff = (grandTotalRounded - subtotal);
+            let roundoffText = roundoff >= 0 ? `+${roundoff.toFixed(2)}` : `${roundoff.toFixed(2)}`;
 
             // Render on receipt
             document.getElementById('receipt-items-body').innerHTML = tableBodyHtml;
-            document.getElementById('lbl-total-items-qty').innerText = `TOTAL ITEM(S) :${totalItemsCount}  /QTY:${totalQtySum.toFixed(3)}`;
             document.getElementById('lbl-subtotal').innerText = subtotal.toFixed(2);
+            document.getElementById('lbl-total-qty').innerText = totalQtySum;
             
-            document.getElementById('lbl-tax-base').innerText = subtotal.toFixed(2);
+            document.getElementById('lbl-tax-base').innerText = taxBase.toFixed(2);
             document.getElementById('lbl-cgst').innerText = cgst.toFixed(2);
             document.getElementById('lbl-sgst').innerText = sgst.toFixed(2);
-            document.getElementById('lbl-tax-total').innerText = taxTotal.toFixed(2);
             
+            document.getElementById('lbl-roundoff').innerText = roundoffText;
             document.getElementById('lbl-grand-total').innerText = `₹${grandTotalRounded.toFixed(2)}`;
-            document.getElementById('lbl-roundoff').innerText = Math.abs(roundoff);
         }
 
         function generateReceipt() {
-            // First calculate latest changes
             calculateAndRender();
 
             // Metadata updates
@@ -377,7 +373,7 @@
                 document.getElementById('lbl-date').innerText = parts[2] + '/' + parts[1] + '/' + parts[0].substring(2);
             }
 
-            document.getElementById('lbl-waiter').innerText = document.getElementById('input-waiter').value;
+            document.getElementById('lbl-counter').innerText = document.getElementById('input-counter').value;
             
             // Print Trigger
             window.print();
